@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux Command Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .command-card {
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+        .command-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        .terminal {
+    font-family: 'Courier New', monospace;
+    background-color: #12100e;       /* Very dark brownish-black */
+    color: #f5e05a;                  /* Soft yellow text */
+    border-radius: 8px;
+    padding: 15px;
+    position: relative;
+    border: 1.5px solid #a78b0e;    /* Mustard yellow border */
+    box-shadow: 0 4px 10px rgba(167, 139, 14, 0.4); /* subtle yellow glow */
+}
+
+.terminal::before {
+    content: "terminal";
+    position: absolute;
+    top: -12px;
+    left: 15px;
+    background-color: #a78b0e;      /* Mustard yellow background */
+    color: #12100e;                 /* Dark text for contrast */
+    padding: 0 10px;
+    font-size: 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+        .prompt {
+            color: #4fd1c5;
+        }
+        .cursor {
+            animation: blink 1s infinite;
+        }
+        .author-details {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        .author-details a {
+            color: #4da8ff;
+            text-decoration: none;
+        }
+        .author-details a:hover {
+            color: #80bfff;
+            text-decoration: underline;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        .project-window {
+            height: 500px;
+            overflow-y: auto;
+        }
+        .search-bar {
+            transition: all 0.3s ease;
+        }
+        .search-bar:focus {
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+        }
+        .history-item:hover {
+            background-color: #2d3748;
+            cursor: pointer;
+        }
+        .quiz-container {
+            background-color: #2d3748;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-emerald-400 mb-2">Linux Command Explorer By Kunal Saraswat </h1>
+            <p class="text-gray-400">Master essential Linux commands through interactive learning</p>
+
+            <!-- Search Bar -->
+            <div class="mt-6 max-w-xl mx-auto">
+                <input type="text" id="search-bar" class="search-bar w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-emerald-500" placeholder="Search commands...">
+            </div>
+
+            <!-- Progress Tracker -->
+            <div class="mt-8 bg-gray-800 rounded-lg p-4 max-w-2xl mx-auto">
+                <div class="flex justify-between mb-2">
+                    <span class="text-sm font-medium">Learning Progress</span>
+                    <span class="text-sm font-medium" id="progressPercentage">0%</span>
+                </div>
+
+                <div class="w-full bg-gray-700 rounded-full h-2.5">
+                    <div class="progress-bar bg-emerald-500 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <!-- Reset Button -->
+<div class="mt-4 text-center">
+    <button onclick="resetProgress()" class="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-lg text-sm text-white transition">
+        🔄 Reset Progress
+    </button>
+</div>
+
+                <div class="mt-4 flex justify-between text-xs text-gray-400">
+                    <span>Basic Commands</span>
+                    <span>File Operations</span>
+                    <span>System Info</span>
+                    <span>Advanced</span>
+                </div>
+            </div>
+        </header>
+
+<div class="author-details bg-gray-800 shadow-lg rounded-lg p-5 text-sm space-y-2 w-64">
+    <h4 class="text-lg font-semibold text-emerald-400 border-b border-gray-700 pb-2">Author</h4>
+    <p class="text-gray-300">Name: <span class="font-medium text-white">Kunal Saraswat</span></p>
+    <p>
+        <a href="https://www.linkedin.com/in/kunalsaraswat/" target="_blank" class="text-blue-400 hover:text-blue-300 transition">
+            🔗 LinkedIn Profile
+        </a>
+    </p>
+    <p>
+        <a href="https://github.com/kunalsaraswat" target="_blank" class="text-gray-300 hover:text-white transition">
+            🐙 GitHub Profile
+        </a>
+
+    </p>
+</div>
+
+
+
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Command Categories -->
+            <div class="lg:col-span-1 bg-gray-800 rounded-xl p-6 h-fit sticky top-6">
+                <h2 class="text-xl font-semibold text-emerald-400 mb-4">Command Categories</h2>
+                <div class="space-y-2">
+                    <button class="category-btn w-full text-left px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition" data-category="basic">Basic Commands</button>
+                    <button class="category-btn w-full text-left px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition" data-category="file">File Operations</button>
+                    <button class="category-btn w-full text-left px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition" data-category="system">System Information</button>
+                    <button class="category-btn w-full text-left px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition" data-category="advanced">Advanced Commands</button>
+                </div>
+
+                <h2 class="text-xl font-semibold text-emerald-400 mt-8 mb-4">Live Projects</h2>
+                <div class="space-y-4">
+                    <button class="project-btn w-full text-left px-4 py-3 rounded-lg bg-purple-800 hover:bg-purple-700 transition flex items-center" data-project="file-manager">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.4145.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        File Manager Demo
+                    </button>
+                    <button class="project-btn w-full text-left px-4 py-3 rounded-lg bg-purple-800 hover:bg-purple-700 transition flex items-center" data-project="system-monitor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        System Monitor Demo
+                    </button>
+                    <!-- Add these project buttons with the existing ones -->
+<button class="project-btn w-full text-left px-4 py-3 rounded-lg bg-purple-800 hover:bg-purple-700 transition flex items-center" data-project="sed-processing-project">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    Text Processing with sed
+</button>
+<button class="project-btn w-full text-left px-4 py-3 rounded-lg bg-purple-800 hover:bg-purple-700 transition flex items-center" data-project="awk-processing-project">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    Data Processing with awk
+</button>
+
+                </div>
+
+                <h2 class="text-xl font-semibold text-emerald-400 mt-8 mb-4">Command History</h2>
+                <div id="command-history" class="space-y-2 max-h-40 overflow-y-auto"></div>
+
+            </div>
+
+            <!-- Command Display Area -->
+            <div class="lg:col-span-2">
+                <!-- Default View (Basic Commands) -->
+                <div id="commands-view">
+                    <h2 class="text-2xl font-bold text-emerald-400 mb-6" id="category-title">Basic Commands</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="commands-container">
+                        <!-- Commands will be loaded here dynamically -->
+                    </div>
+                </div>
+
+                <!-- Project Views (Hidden by default) -->
+                <div id="project-views" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-emerald-400" id="project-title">Project Demo</h2>
+                        <button id="back-to-commands" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
+                            ← Back to Commands
+                        </button>
+                    </div>
+
+                    <div id="sed-processing-project" class="hidden project-window bg-gray-800 rounded-xl p-6">
+    <div class="terminal mb-6">
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">cat > data.txt</span>
+            <div class="output mt-1">
+                <div>John,25,Engineer</div>
+                <div>Sarah,30,Doctor</div>
+                <div>Mike,22,Student</div>
+                <div>Lisa,35,Teacher</div>
+                <div class="text-gray-500">(Ctrl+D to save)</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">sed 's/25/26/' data.txt</span>
+            <div class="output mt-1">
+                <div>John,26,Engineer</div>
+                <div>Sarah,30,Doctor</div>
+                <div>Mike,22,Student</div>
+                <div>Lisa,35,Teacher</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">sed '/Student/d' data.txt</span>
+            <div class="output mt-1">
+                <div>John,25,Engineer</div>
+                <div>Sarah,30,Doctor</div>
+                <div>Lisa,35,Teacher</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">sed '2i\Emma,28,Designer' data.txt</span>
+            <div class="output mt-1">
+                <div>John,25,Engineer</div>
+                <div>Emma,28,Designer</div>
+                <div>Sarah,30,Doctor</div>
+                <div>Mike,22,Student</div>
+                <div>Lisa,35,Teacher</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">sed -n '2,4p' data.txt</span>
+            <div class="output mt-1">
+                <div>Sarah,30,Doctor</div>
+                <div>Mike,22,Student</div>
+                <div>Lisa,35,Teacher</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">sed 's/^/Name: /' data.txt</span>
+            <div class="output mt-1">
+                <div>Name: John,25,Engineer</div>
+                <div>Name: Sarah,30,Doctor</div>
+                <div>Name: Mike,22,Student</div>
+                <div>Name: Lisa,35,Teacher</div>
+            </div>
+        </div>
+        <div>
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">sed -i.bak 's/Teacher/Professor/' data.txt</span>
+            <div class="output mt-1 text-green-400">Modified data.txt and created backup data.txt.bak</div>
+        </div>
+    </div>
+
+    <div class="bg-gray-700 p-4 rounded-lg">
+        <h3 class="font-medium text-emerald-400 mb-2">Project Summary: Text Processing with sed</h3>
+        <p class="text-gray-300">This demo shows how to perform powerful text transformations using sed:</p>
+        <ul class="list-disc list-inside mt-2 text-gray-300 space-y-1">
+            <li><code class="bg-gray-800 px-1 rounded">sed 's/old/new/'</code> - Substitute text</li>
+            <li><code class="bg-gray-800 px-1 rounded">sed '/pattern/d'</code> - Delete lines matching pattern</li>
+            <li><code class="bg-gray-800 px-1 rounded">sed 'Ni\text'</code> - Insert text before line N</li>
+            <li><code class="bg-gray-800 px-1 rounded">sed -n '2,4p'</code> - Print specific lines (2-4)</li>
+            <li><code class="bg-gray-800 px-1 rounded">sed 's/^/prefix/'</code> - Add prefix to lines</li>
+            <li><code class="bg-gray-800 px-1 rounded">sed -i.bak</code> - In-place editing with backup</li>
+        </ul>
+    </div>
+</div>
+
+<div id="awk-processing-project" class="hidden project-window bg-gray-800 rounded-xl p-6">
+    <div class="terminal mb-6">
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">cat > employees.csv</span>
+            <div class="output mt-1">
+                <div>Name,Department,Salary</div>
+                <div>John,Engineering,75000</div>
+                <div>Sarah,Marketing,68000</div>
+                <div>Mike,Sales,82000</div>
+                <div>Lisa,Engineering,90000</div>
+                <div class="text-gray-500">(Ctrl+D to save)</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">awk -F ',' '{print $1}' employees.csv</span>
+            <div class="output mt-1">
+                <div>Name</div>
+                <div>John</div>
+                <div>Sarah</div>
+                <div>Mike</div>
+                <div>Lisa</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">awk -F ',' '$3 > 80000 {print $1,$3}' employees.csv</span>
+            <div class="output mt-1">
+                <div>Mike 82000</div>
+                <div>Lisa 90000</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">awk -F ',' 'BEGIN {print "High Earners:"} $3 > 70000 {print $1,$3}' employees.csv</span>
+            <div class="output mt-1">
+                <div>High Earners:</div>
+                <div>John 75000</div>
+                <div>Sarah 68000</div>
+                <div>Mike 82000</div>
+                <div>Lisa 90000</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">awk -F ',' '{sum += $3; count++} END {print "Avg Salary:", sum/count}' employees.csv</span>
+            <div class="output mt-1">
+                <div>Avg Salary: 78750</div>
+            </div>
+        </div>
+        <div class="mb-4">
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">awk -F ',' '{print NR ". " $1}' employees.csv</span>
+            <div class="output mt-1">
+                <div>1. Name</div>
+                <div>2. John</div>
+                <div>3. Sarah</div>
+                <div>4. Mike</div>
+                <div>5. Lisa</div>
+            </div>
+        </div>
+        <div>
+            <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">awk -F ',' '$1 ~ /^S/ {print $0}' employees.csv</span>
+            <div class="output mt-1">
+                <div>Sarah,Marketing,68000</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gray-700 p-4 rounded-lg">
+        <h3 class="font-medium text-emerald-400 mb-2">Project Summary: Data Processing with awk</h3>
+        <p class="text-gray-300">This demo shows how to process and analyze structured data using awk:</p>
+        <ul class="list-disc list-inside mt-2 text-gray-300 space-y-1">
+            <li><code class="bg-gray-800 px-1 rounded">awk -F ',' '{print $1}'</code> - Print first column</li>
+            <li><code class="bg-gray-800 px-1 rounded">awk '$3 > 80000'</code> - Filter rows by condition</li>
+            <li><code class="bg-gray-800 px-1 rounded">awk 'BEGIN {print "Header"}</code> - Execute before processing</li>
+            <li><code class="bg-gray-800 px-1 rounded">awk '{sum += $3} END {print sum}'</code> - Calculate totals</li>
+            <li><code class="bg-gray-800 px-1 rounded">awk '{print NR ". " $1}'</code> - Add line numbers</li>
+            <li><code class="bg-gray-800 px-1 rounded">awk '$1 ~ /^S/'</code> - Pattern matching on fields</li>
+        </ul>
+    </div>
+</div>
+                    <!-- File Manager Project -->
+                    <div id="file-manager-project" class="hidden project-window bg-gray-800 rounded-xl p-6">
+                        <div class="terminal mb-6">
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects$</span> <span class="command">mkdir my_project</span>
+                                <div class="output mt-1 text-green-400">Directory 'my_project' created successfully</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects$</span> <span class="command">cd my_project</span>
+                                <div class="output mt-1 text-green-400">Changed directory to /home/kunal/projects/my_project</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects/my_project$</span> <span class="command">touch index.html style.css app.js</span>
+                                <div class="output mt-1 text-green-400">Files 'index.html', 'style.css', and 'app.js' created</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects/my_project$</span> <span class="command">ls -l</span>
+                                <div class="output mt-1">
+                                    <div>total 12</div>
+                                    <div>-rw-r--r-- 1 kunal kunal 0 Jun 10 14:30 index.html</div>
+                                    <div>-rw-r--r-- 1 kunal kunal 0 Jun 10 14:30 style.css</div>
+                                    <div>-rw-r--r-- 1 kunal kunal 0 Jun 10 14:30 app.js</div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects/my_project$</span> <span class="command">cat > index.html</span>
+                                <div class="output mt-1">
+                                    <div><!DOCTYPE html></div>
+                                    <div><html></div>
+                                    <div><head></div>
+                                    <div><title>My Project</title></div>
+                                    <div><link rel="stylesheet" href="style.css"></div>
+                                    <div><script src="app.js"></script></div>
+                                    <div></head></div>
+                                    <div><body></div>
+                                    <div><h1>Hello World!</h1></div>
+                                    <div></body></div>
+                                    <div></html></div>
+                                    <div class="text-gray-500">(Ctrl+D to save)</div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects/my_project$</span> <span class="command">ln -s style.css stylesheet.css</span>
+                                <div class="output mt-1 text-green-400">Created symbolic link 'stylesheet.css' -> 'style.css'</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects/my_project$</span> <span class="command">find . -name "*.css"</span>
+                                <div class="output mt-1">
+                                    <div>./style.css</div>
+                                    <div>./stylesheet.css</div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects/my_project$</span> <span class="command">cp index.html index.bak</span>
+                                <div class="output mt-1 text-green-400">Copied 'index.html' to 'index.bak'</div>
+                            </div>
+                            <div>
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~/projects/my_project$</span> <span class="command">ls -i</span>
+                                <div class="output mt-1">
+                                    <div>123456 -rw-r--r-- 1 kunal kunal 0 Jun 10 14:30 index.html</div>
+                                    <div>123457 -rw-r--r-- 1 kunal kunal 0 Jun 10 14:30 style.css</div>
+                                    <div>123458 lrwxrwxrwx 1 kunal kunal 9 Jun 10 14:35 stylesheet.css -> style.css</div>
+                                    <div>123459 -rw-r--r-- 1 kunal kunal 0 Jun 10 14:30 app.js</div>
+                                    <div>123460 -rw-r--r-- 1 kunal kunal 0 Jun 10 14:30 index.bak</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-700 p-4 rounded-lg">
+                            <h3 class="font-medium text-emerald-400 mb-2">Project Summary</h3>
+                            <p class="text-gray-300">This demo shows how to create a web project using Linux commands:</p>
+                            <ul class="list-disc list-inside mt-2 text-gray-300 space-y-1">
+                                <li><code class="bg-gray-800 px-1 rounded">mkdir</code> creates the project directory</li>
+                                <li><code class="bg-gray-800 px-1 rounded">cd</code> navigates into the directory</li>
+                                <li><code class="bg-gray-800 px-1 rounded">touch</code> creates empty files</li>
+                                <li><code class="bg-gray-800 px-1 rounded">cat</code> writes content to files</li>
+                                <li><code class="bg-gray-800 px-1 rounded">ln -s</code> creates symbolic links</li>
+                                <li><code class="bg-gray-800 px-1 rounded">ls -l</code> shows detailed file info</li>
+                                <li><code class="bg-gray-800 px-1 rounded">ls -i</code> shows inode numbers</li>
+                                <li><code class="bg-gray-800 px-1 rounded">find</code> searches for files</li>
+                                <li><code class="bg-gray-800 px-1 rounded">cp</code> copies files</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- System Monitor Project -->
+                    <div id="system-monitor-project" class="hidden project-window bg-gray-800 rounded-xl p-6">
+                        <div class="terminal mb-6">
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">whoami</span>
+                                <div class="output mt-1">kunal</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">pwd</span>
+                                <div class="output mt-1">/home/kunal</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">which bash</span>
+                                <div class="output mt-1">/bin/bash</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">whereis python</span>
+                                <div class="output mt-1">python: /usr/bin/python3 /usr/bin/python /usr/lib/python3.8 /etc/python3.8 /usr/share/python</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">type cd</span>
+                                <div class="output mt-1">cd is a shell builtin</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">printenv PATH</span>
+                                <div class="output mt-1">/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">df -h</span>
+                                <div class="output mt-1">
+                                    <div>Filesystem      Size  Used Avail Use% Mounted on</div>
+                                    <div>/dev/sda1       100G   50G   45G  53% /</div>
+                                    <div>tmpfs           3.9G  1.2M  3.9G   1% /dev/shm</div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">uptime</span>
+                                <div class="output mt-1">14:45:30 up 2 days, 3:45, 1 kunal, load average: 0.15, 0.10, 0.05</div>
+                            </div>
+                            <div class="mb-4">
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">top</span>
+                                <div class="output mt-1 bg-gray-900 p-2 rounded">
+                                    <div>top - 14:45:30 up 2 days,  3:45,  1 kunal,  load average: 0.15, 0.10, 0.05</div>
+                                    <div>Tasks: 125 total,   1 running, 124 sleeping,   0 stopped,   0 zombie</div>
+                                    <div>%Cpu(s):  2.3 us,  0.7 sy,  0.0 ni, 96.8 id,  0.1 wa,  0.0 hi,  0.1 si,  0.0 st</div>
+                                    <div>MiB Mem :   7856.4 total,   1024.2 free,   2048.3 used,   4783.9 buff/cache</div>
+                                    <div>MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   5432.1 avail Mem</div>
+                                    <div class="mt-2">
+                                        <div>  PID kunal      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND</div>
+                                        <div> 1234 kunal      20   0  123456  12345   6789 S   2.3  0.2   0:45.67 gnome-shell</div>
+                                        <div> 5678 kunal      20   0  234567  12345   7890 S   1.5  0.2   0:12.34 chrome</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">clear</span>
+                                <div class="output mt-1 text-gray-500">(Terminal cleared)</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-700 p-4 rounded-lg">
+                            <h3 class="font-medium text-emerald-400 mb-2">Project Summary</h3>
+                            <p class="text-gray-300">This demo shows how to monitor your system and get information about your environment:</p>
+                            <ul class="list-disc list-inside mt-2 text-gray-300 space-y-1">
+                                <li><code class="bg-gray-800 px-1 rounded">whoami</code> shows current kunal</li>
+                                <li><code class="bg-gray-800 px-1 rounded">pwd</code> shows current directory</li>
+                                <li><code class="bg-gray-800 px-1 rounded">which</code> locates a command</li>
+                                <li><code class="bg-gray-800 px-1 rounded">whereis</code> finds program files</li>
+                                <li><code class="bg-gray-800 px-1 rounded">type</code> shows command type</li>
+                                <li><code class="bg-gray-800 px-1 rounded">printenv</code> shows environment variables</li>
+                                <li><code class="bg-gray-800 px-1 rounded">df</code> shows disk usage</li>
+                                <li><code class="bg-gray-800 px-1 rounded">uptime</code> shows system uptime</li>
+                                <li><code class="bg-gray-800 px-1 rounded">top</code> monitors system processes</li>
+                                <li><code class="bg-gray-800 px-1 rounded">clear</code> clears the terminal</li>
+                            </ul>
+                        </div>
+                    </div>
+
+
+                    <!-- Quiz View -->
+                    <div id="quiz-view" class="hidden quiz-container p-6">
+                        <h2 class="text-2xl font-bold text-emerald-400 mb-4">Command Quiz</h2>
+                        <div id="quiz-question" class="text-lg text-gray-200 mb-4"></div>
+                        <div id="quiz-options" class="space-y-2"></div>
+                        <div id="quiz-feedback" class="mt-4 text-gray-400"></div>
+                        <div class="mt-6 flex justify-between">
+                            <button id="next-question" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg transition">Next Question</button>
+                            <button id="end-quiz" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition">End Quiz</button>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-400">Score: <span id="quiz-score">0</span>/5</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Command data with expanded commands
+        const commands = {
+            basic: [
+
+  {
+    "name": "ls",
+    "description": "List directory contents",
+    "example": "ls",
+    "output": "file1.txt  folder1"
+  },
+  {
+    "name": "cd",
+    "description": "Change the current directory",
+    "example": "cd Documents",
+    "output": "(Changes to the Documents directory)"
+  },
+  {
+    "name": "pwd",
+    "description": "Print working directory",
+    "example": "pwd",
+    "output": "/home/kunal/Documents"
+  },
+  {
+    "name": "echo",
+    "description": "Display a message or variable value",
+    "example": "echo Hello",
+    "output": "Hello"
+  },
+  {
+    "name": "clear",
+    "description": "Clear the terminal screen",
+    "example": "clear",
+    "output": "(Terminal screen is cleared)"
+  },
+  {
+    "name": "man",
+    "description": "Display the manual page for a command",
+    "example": "man ls",
+    "output": "(Manual page for ls opens)"
+  },
+  {
+    "name": "grep",
+    "description": "Search for patterns in text",
+    "example": "grep 'main' file.txt",
+    "output": "int main()"
+  },
+  {
+    "name": "history",
+    "description": "Show the command history",
+    "example": "history",
+    "output": "1 ls\n2 cd Documents\n3 echo Hello"
+  },
+  {
+    "name": "alias",
+    "description": "Create an alias for a command",
+    "example": "alias ll='ls -la'",
+    "output": "(Creates alias 'll' for 'ls -la')"
+  },
+  {
+    "name": "unalias",
+    "description": "Remove an alias",
+    "example": "unalias ll",
+    "output": "(Removes alias named 'll')"
+  },
+  {
+    "name": "whoami",
+    "description": "Show current logged-in kunal",
+    "example": "whoami",
+    "output": "kunal"
+  },
+  {
+    "name": "date",
+    "description": "Display the current date and time",
+    "example": "date",
+    "output": "Tue Jun  3 10:00:00 IST 2025"
+  },
+  {
+    "name": "cal",
+    "description": "Display a calendar",
+    "example": "cal",
+    "output": "(Displays the current month's calendar)"
+  },
+  {
+    "name": "sleep",
+    "description": "Delay execution for a given number of seconds",
+    "example": "sleep 5",
+    "output": "(Pauses for 5 seconds)"
+  },
+  {
+    "name": "read",
+    "description": "Read kunal input",
+    "example": "read name",
+    "output": "(Waits for kunal to type something into 'name')"
+  },
+  {
+    "name": "uname",
+    "description": "Show system information (basic kernel name)",
+    "example": "uname",
+    "output": "Linux"
+  },
+  {
+    "name": "uptime",
+    "description": "Show how long the system has been running",
+    "example": "uptime",
+    "output": "up 2 days, 3:04"
+  },
+  {
+    "name": "id",
+    "description": "Show kunal and group IDs",
+    "example": "id",
+    "output": "uid=1000(kunal) gid=1000(kunal) groups=1000(kunal)"
+  },
+  {
+    "name": "env",
+    "description": "Display environment variables",
+    "example": "env",
+    "output": "(List of environment variables)"
+  },
+  {
+    "name": "export",
+    "description": "Set environment variables",
+    "example": "export VAR=value",
+    "output": "(Sets the environment variable VAR)"
+  },
+  {
+    "name": "basename",
+    "description": "Extract filename from a path",
+    "example": "basename /home/kunal/file.txt",
+    "output": "file.txt"
+  },
+  {
+    "name": "dirname",
+    "description": "Extract directory path from full file path",
+    "example": "dirname /home/kunal/file.txt",
+    "output": "/home/kunal"
+  },
+  {
+    "name": "printf",
+    "description": "Format and print data",
+    "example": "printf \"Name: %s\\n\" John",
+    "output": "Name: John"
+  },
+  {
+    "name": "seq",
+    "description": "Generate a sequence of numbers",
+    "example": "seq 1 5",
+    "output": "1 2 3 4 5"
+  },
+  {
+    "name": "yes",
+    "description": "Output a string repeatedly until stopped",
+    "example": "yes Hello",
+    "output": "Hello\nHello\nHello..."
+  }
+],
+            file: [
+    {
+        "name": "stat",
+        "description": "Display detailed information about a file",
+        "example": "stat file.txt",
+        "output": "Size: 1024\tBlocks: 8\tIO Block: 4096\tRegular file\nDevice: 802h/Inode: 123456\tLinks: 1"
+    },
+    {
+        "name": "head",
+        "description": "View the first few lines of a file",
+        "example": "head file.txt",
+        "output": "(Displays first 10 lines of file.txt)"
+    },
+    {
+        "name": "tail",
+        "description": "View the last few lines of a file",
+        "example": "tail file.txt",
+        "output": "(Displays last 10 lines of file.txt)"
+    },
+    {
+        "name": "wc",
+        "description": "Count lines, words, and characters in a file",
+        "example": "wc file.txt",
+        "output": "10 50 300 file.txt"
+    },
+    {
+        "name": "basename",
+        "description": "Extract filename from a path",
+        "example": "basename /home/kunal/file.txt",
+        "output": "file.txt"
+    },
+    {
+        "name": "dirname",
+        "description": "Extract directory path from a full file path",
+        "example": "dirname /home/kunal/file.txt",
+        "output": "/home/kunal"
+    },
+    {
+        "name": "cut",
+        "description": "Remove sections from each line of a file",
+        "example": "cut -d':' -f1 /etc/passwd",
+        "output": "root\nkunal1\nkunal2"
+    },
+    {
+        "name": "split",
+        "description": "Split a file into smaller files",
+        "example": "split -b 1M largefile.bin part_",
+        "output": "Creates part_aa, part_ab, ..."
+    },
+    {
+        "name": "cmp",
+        "description": "Compare two files byte by byte",
+        "example": "cmp file1.txt file2.txt",
+        "output": "file1.txt file2.txt differ: byte 10, line 1"
+    },
+    {
+        "name": "diff",
+        "description": "Compare two files line by line",
+        "example": "diff file1.txt file2.txt",
+        "output": "1c1\n< Hello\n---\n> Hi"
+    },
+    {
+        "name": "file",
+        "description": "Determine file type",
+        "example": "file image.png",
+        "output": "image.png: PNG image data, 800 x 600, 8-bit/color"
+    },
+    {
+        "name": "lsattr",
+        "description": "List file attributes on a Linux file system",
+        "example": "lsattr file.txt",
+        "output": "----i--------e-- file.txt"
+    },
+    {
+        "name": "chattr",
+        "description": "Change file attributes",
+        "example": "chattr +i important.txt",
+        "output": "(Sets immutable flag on important.txt)"
+    },
+    {
+        "name": "chmod +x",
+        "description": "Make a file executable",
+        "example": "chmod +x script.sh",
+        "output": "(Adds executable permission to script.sh)"
+    },
+    {
+        "name": "chmod -R",
+        "description": "Change permissions recursively for directories",
+        "example": "chmod -R 755 my_folder",
+        "output": "(Applies 755 permissions to all inside my_folder)"
+    },
+    {
+        "name": "chown -R",
+        "description": "Change ownership recursively",
+        "example": "chown -R kunal:group folder/",
+        "output": "(Changes owner and group of all contents recursively)"
+    },
+    {
+        "name": "readlink",
+        "description": "Display the target of a symbolic link",
+        "example": "readlink link.txt",
+        "output": "/actual/path/to/original_file.txt"
+    },
+    {
+        "name": "realpath",
+        "description": "Print the resolved absolute path of a file",
+        "example": "realpath link.txt",
+        "output": "/home/kunal/original_file.txt"
+    },
+    {
+        "name": "tar",
+        "description": "Archive files using tar format",
+        "example": "tar -cvf archive.tar folder/",
+        "output": "(Creates archive.tar with contents of folder/)"
+    },
+    {
+        "name": "gzip",
+        "description": "Compress a file using gzip",
+        "example": "gzip file.txt",
+        "output": "(Creates compressed file.txt.gz)"
+    },
+    {
+        "name": "gunzip",
+        "description": "Decompress a .gz file",
+        "example": "gunzip file.txt.gz",
+        "output": "(Restores original file.txt)"
+    },
+    {
+        "name": "xz",
+        "description": "Compress files using the xz algorithm",
+        "example": "xz file.txt",
+        "output": "(Creates file.txt.xz)"
+    },
+    {
+        "name": "unxz",
+        "description": "Decompress .xz files",
+        "example": "unxz file.txt.xz",
+        "output": "(Restores file.txt)"
+    },
+    {
+        "name": "tee",
+        "description": "Read from input and write to file and stdout",
+        "example": "echo 'Hello' | tee hello.txt",
+        "output": "Hello (Also writes to hello.txt)"
+    },
+    {
+        "name": "shred",
+        "description": "Securely delete file content to prevent recovery",
+        "example": "shred -u secret.txt",
+        "output": "(Overwrites and deletes secret.txt securely)"
+    }
+],
+
+            system: [
+    {
+        "name": "whoami",
+        "description": "Display current kunalname",
+        "example": "whoami",
+        "output": "kunal"
+    },
+    {
+        "name": "which",
+        "description": "Locate a command - shows the full path of shell commands",
+        "example": "which python",
+        "output": "/usr/bin/python"
+    },
+    {
+        "name": "whereis",
+        "description": "Locate binary, source, and manual pages for a command",
+        "example": "whereis bash",
+        "output": "bash: /bin/bash /etc/bash.bashrc /usr/share/man/man1/bash.1.gz"
+    },
+    {
+        "name": "type",
+        "description": "Display information about command type",
+        "example": "type cd",
+        "output": "cd is a shell builtin"
+    },
+    {
+        "name": "printenv",
+        "description": "Print all or part of environment variables",
+        "example": "printenv PATH",
+        "output": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    },
+    {
+        "name": "df",
+        "description": "Report file system disk space usage",
+        "example": "df -h",
+        "output": "Filesystem Size Used Avail Use% Mounted on\n/dev/sda1 100G 50G 45G 53% /"
+    },
+    {
+        "name": "uptime",
+        "description": "Show how long the system has been running",
+        "example": "uptime",
+        "output": "14:45:30 up 2 days, 3:45, 1 kunal, load average: 0.15, 0.10, 0.05"
+    },
+    {
+        "name": "uname",
+        "description": "Print system information",
+        "example": "uname -a",
+        "output": "Linux hostname 5.15.0-73-generic #80-Ubuntu SMP x86_64 GNU/Linux"
+    },
+    {
+        "name": "hostname",
+        "description": "Display or set system's hostname",
+        "example": "hostname",
+        "output": "my-computer"
+    },
+    {
+        "name": "top",
+        "description": "Show real-time system processes and resource usage",
+        "example": "top",
+        "output": "(Interactive display of CPU and memory usage)"
+    },
+    {
+        "name": "htop",
+        "description": "Interactive process viewer (enhanced version of top)",
+        "example": "htop",
+        "output": "(Graphical resource usage per process)"
+    },
+    {
+        "name": "free",
+        "description": "Display memory usage",
+        "example": "free -h",
+        "output": "Mem: 7.8Gi 3.2Gi 4.6Gi ..."
+    },
+    {
+        "name": "vmstat",
+        "description": "Report virtual memory statistics",
+        "example": "vmstat 1",
+        "output": "(Displays system performance every second)"
+    },
+    {
+        "name": "dmesg",
+        "description": "Print system boot and kernel ring buffer messages",
+        "example": "dmesg | grep error",
+        "output": "(Displays kernel messages related to errors)"
+    },
+    {
+        "name": "journalctl",
+        "description": "Query and display messages from systemd journal",
+        "example": "journalctl -xe",
+        "output": "(Shows recent system logs with errors)"
+    },
+    {
+        "name": "id",
+        "description": "Show kunal ID (UID), group ID (GID), and groups",
+        "example": "id",
+        "output": "uid=1000(kunal) gid=1000(kunal) groups=1000(kunal),27(sudo)"
+    },
+    {
+        "name": "env",
+        "description": "Display all environment variables",
+        "example": "env",
+        "output": "PATH=/usr/bin:/bin\nHOME=/home/kunal"
+    },
+    {
+        "name": "lscpu",
+        "description": "Display CPU architecture information",
+        "example": "lscpu",
+        "output": "Architecture: x86_64\nCPU(s): 4\nModel name: Intel(R)..."
+    },
+    {
+        "name": "lsblk",
+        "description": "List information about block devices",
+        "example": "lsblk",
+        "output": "NAME MAJ:MIN RM SIZE RO TYPE MOUNTPOINT\nsda 8:0 0 100G 0 disk\n└─sda1 8:1 0 100G 0 part /"
+    },
+    {
+        "name": "lspci",
+        "description": "List all PCI devices",
+        "example": "lspci",
+        "output": "00:02.0 VGA compatible controller: Intel Corporation UHD Graphics"
+    },
+    {
+        "name": "lsusb",
+        "description": "List USB devices",
+        "example": "lsusb",
+        "output": "Bus 002 Device 003: ID 046d:c534 Logitech, Inc. Unifying Receiver"
+    },
+    {
+        "name": "systemctl",
+        "description": "Control the systemd system and service manager",
+        "example": "systemctl status",
+        "output": "(Displays system service status)"
+    },
+    {
+        "name": "timedatectl",
+        "description": "Show or set system date and time",
+        "example": "timedatectl",
+        "output": "Local time: Tue 2025-06-03 11:00 IST\nTime zone: Asia/Kolkata"
+    },
+    {
+        "name": "reboot",
+        "description": "Reboot the system",
+        "example": "sudo reboot",
+        "output": "(System restarts)"
+    },
+    {
+        "name": "shutdown",
+        "description": "Halt, power off or reboot the system",
+        "example": "sudo shutdown now",
+        "output": "(Shuts system down immediately)"
+    }
+],
+
+            advanced: [
+    {
+        "name": "egrep",
+        "description": "Extended grep supporting extended regular expressions",
+        "example": "egrep 'error|fail' log.txt",
+        "output": "(Matches 'error' or 'fail' in log.txt)"
+    },
+    {
+        "name": "grep -r",
+        "description": "Recursively search for a pattern in files",
+        "example": "grep -r 'TODO' ./src",
+        "output": "(Lists all files containing TODO)"
+    },
+    {
+        "name": "grep -v",
+        "description": "Invert match, show lines not matching pattern",
+        "example": "grep -v '^#' config.txt",
+        "output": "(Shows non-commented lines)"
+    },
+    {
+        "name": "grep -n",
+        "description": "Show line numbers with matches",
+        "example": "grep -n 'main' code.c",
+        "output": "23: int main() {"
+    },
+    {
+        "name": "awk -F",
+        "description": "Specify custom field separator",
+        "example": "awk -F ':' '{print $1}' /etc/passwd",
+        "output": "(Prints kunalnames)"
+    },
+    {
+        "name": "awk if condition",
+        "description": "Use conditionals in awk",
+        "example": "awk '{if ($3 > 50) print $1}' marks.txt",
+        "output": "(Prints names with score > 50)"
+    },
+    {
+        "name": "awk with BEGIN",
+        "description": "Run code before reading input",
+        "example": "awk 'BEGIN {print \"Name Score\"} {print $1, $2}' file.txt",
+        "output": "Name Score\nJohn 90"
+    },
+    {
+        "name": "awk with multiple conditions",
+        "description": "Combine conditions in awk",
+        "example": "awk '$3 > 50 && $2 == \"Math\"' grades.txt",
+        "output": "(Filters rows with Math subject and score > 50)"
+    },
+    {
+        "name": "sed delete line",
+        "description": "Delete specific line",
+        "example": "sed '5d' file.txt",
+        "output": "(Deletes 5th line of file.txt)"
+    },
+    {
+        "name": "sed insert line",
+        "description": "Insert line before match",
+        "example": "sed '/pattern/i inserted line' file.txt",
+        "output": "(Inserts line before pattern)"
+    },
+    {
+        "name": "sed append line",
+        "description": "Append line after match",
+        "example": "sed '/pattern/a new line' file.txt",
+        "output": "(Adds line after pattern)"
+    },
+    {
+        "name": "sed delete blank lines",
+        "description": "Remove empty lines",
+        "example": "sed '/^$/d' file.txt",
+        "output": "(Removes all blank lines)"
+    },
+    {
+        "name": "sed multiple commands",
+        "description": "Chain sed operations",
+        "example": "sed -e 's/foo/bar/g' -e '/bar/d' file.txt",
+        "output": "(Replace and delete lines)"
+    },
+    {
+        "name": "cut",
+        "description": "Remove sections from lines",
+        "example": "cut -d ':' -f1 /etc/passwd",
+        "output": "(Prints kunalnames)"
+    },
+    {
+        "name": "tr",
+        "description": "Translate characters",
+        "example": "tr 'a-z' 'A-Z' < file.txt",
+        "output": "(Converts to uppercase)"
+    },
+    {
+        "name": "xargs",
+        "description": "Build and execute command lines from input",
+        "example": "find . -name '*.log' | xargs rm",
+        "output": "(Deletes all .log files)"
+    },
+    {
+        "name": "find -exec",
+        "description": "Run command on each find result",
+        "example": "find . -name '*.sh' -exec chmod +x {} \\;",
+        "output": "(Makes all .sh files executable)"
+    },
+    {
+        "name": "find -mtime",
+        "description": "Find files modified N days ago",
+        "example": "find . -mtime -7",
+        "output": "(Files modified in last 7 days)"
+    },
+    {
+        "name": "find -size",
+        "description": "Find files by size",
+        "example": "find . -size +100M",
+        "output": "(Files larger than 100MB)"
+    },
+    {
+        "name": "sort -k",
+        "description": "Sort by a specific column",
+        "example": "sort -k2 -n scores.txt",
+        "output": "(Sorts numerically by second column)"
+    },
+    {
+        "name": "uniq -c",
+        "description": "Count duplicate lines",
+        "example": "sort file.txt | uniq -c",
+        "output": "5 apple\n3 banana"
+    },
+    {
+        "name": "tee",
+        "description": "Redirect output to file and screen",
+        "example": "echo 'log' | tee output.txt",
+        "output": "log (and also saved to output.txt)"
+    },
+    {
+        "name": "comm",
+        "description": "Compare two sorted files line by line",
+        "example": "comm file1.txt file2.txt",
+        "output": "(Displays lines unique and common)"
+    },
+    {
+        "name": "diff",
+        "description": "Show line differences between files",
+        "example": "diff a.txt b.txt",
+        "output": "(Displays added/removed lines)"
+    },
+    {
+        "name": "patch",
+        "description": "Apply differences from diff file",
+        "example": "patch < changes.diff",
+        "output": "(Applies changes to original file)"
+    },
+    {
+        "name": "head -n",
+        "description": "Show first N lines",
+        "example": "head -n 5 file.txt",
+        "output": "(First 5 lines of file)"
+    },
+    {
+        "name": "tail -f",
+        "description": "View live appended data",
+        "example": "tail -f /var/log/syslog",
+        "output": "(Follows log file updates)"
+    },
+    {
+        "name": "yes",
+        "description": "Repeat a string until killed",
+        "example": "yes 'ok'",
+        "output": "ok\nok\nok..."
+    },
+    {
+        "name": "expr",
+        "description": "Evaluate expressions",
+        "example": "expr 5 + 3",
+        "output": "8"
+    },
+    {
+        "name": "bc",
+        "description": "Basic calculator with floating point support",
+        "example": "echo 'scale=2; 10/3' | bc",
+        "output": "3.33"
+    },
+    {
+        "name": "seq",
+        "description": "Generate a numeric sequence",
+        "example": "seq 1 5",
+        "output": "1\n2\n3\n4\n5"
+    },
+    {
+        "name": "watch",
+        "description": "Repeat command periodically",
+        "example": "watch -n 5 'df -h'",
+        "output": "(Runs df -h every 5 seconds)"
+    },
+    {
+        "name": "timeout",
+        "description": "Run command with a time limit",
+        "example": "timeout 5s ping google.com",
+        "output": "(Pings for 5 seconds)"
+    },
+    {
+        "name": "read",
+        "description": "Read kunal input in shell scripts",
+        "example": "read name; echo Hello $name",
+        "output": "Hello John"
+    },
+    {
+        "name": "basename",
+        "description": "Extract filename from path",
+        "example": "basename /home/kunal/file.txt",
+        "output": "file.txt"
+    },
+    {
+        "name": "dirname",
+        "description": "Extract directory path from filename",
+        "example": "dirname /home/kunal/file.txt",
+        "output": "/home/kunal"
+    },
+    {
+        "name": "test",
+        "description": "Check conditions in shell",
+        "example": "test -f file.txt && echo exists",
+        "output": "exists"
+    },
+    {
+        "name": "[[ ]]",
+        "description": "Advanced test command in bash",
+        "example": "[[ -d /home ]] && echo 'Dir exists'",
+        "output": "Dir exists"
+    },
+    {
+        "name": "set -x",
+        "description": "Enable bash debugging output",
+        "example": "set -x; echo Hello; set +x",
+        "output": "+ echo Hello\nHello"
+    },
+    {
+        "name": "alias",
+        "description": "Define shell command shortcuts",
+        "example": "alias ll='ls -l'",
+        "output": "(Typing ll runs ls -l)"
+    },
+    {
+        "name": "unalias",
+        "description": "Remove an alias",
+        "example": "unalias ll",
+        "output": "(Removes alias ll)"
+    },
+    {
+        "name": "source",
+        "description": "Execute commands from a file in current shell",
+        "example": "source ~/.bashrc",
+        "output": "(Applies bashrc settings)"
+    },
+    {
+        "name": "export",
+        "description": "Set environment variable",
+        "example": "export MY_VAR=value",
+        "output": "(Sets MY_VAR in current shell)"
+    },
+    {
+        "name": "declare",
+        "description": "Declare variables and their types",
+        "example": "declare -i count=5",
+        "output": "(Creates integer variable)"
+    },
+    {
+        "name": "trap",
+        "description": "Run a command when a signal is received",
+        "example": "trap 'echo Signal received' SIGINT",
+        "output": "(Prints message on Ctrl+C)"
+    },
+    {
+        "name": "getopts",
+        "description": "Parse positional script options",
+        "example": "while getopts 'a:b' opt; do ... done",
+        "output": "(Used for command-line options parsing)"
+    },
+    {
+        "name": "shift",
+        "description": "Shift positional parameters left",
+        "example": "shift; echo $1",
+        "output": "(Skips to next argument)"
+    }
+]
+
+        };
+
+        // DOM elements
+        const commandsContainer = document.getElementById('commands-container');
+        const categoryTitle = document.getElementById('category-title');
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        const projectButtons = document.querySelectorAll('.project-btn');
+        const commandsView = document.getElementById('commands-view');
+        const projectViews = document.getElementById('project-views');
+        const backToCommands = document.getElementById('back-to-commands');
+        const fileManagerProject = document.getElementById('file-manager-project');
+        const systemMonitorProject = document.getElementById('system-monitor-project');
+        const sedProcessingProject = document.getElementById('sed-processing-project');
+        const awkProcessingProject = document.getElementById('awk-processing-project');
+        const projectTitle = document.getElementById('project-title');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const progressBar = document.querySelector('.progress-bar');
+        const searchBar = document.getElementById('search-bar');
+        const commandHistory = document.getElementById('command-history');
+        const startQuizBtn = document.getElementById('start-quiz');
+        const quizView = document.getElementById('quiz-view');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptions = document.getElementById('quiz-options');
+        const quizFeedback = document.getElementById('quiz-feedback');
+        const nextQuestionBtn = document.getElementById('next-question');
+        const endQuizBtn = document.getElementById('end-quiz');
+        const quizScore = document.getElementById('quiz-score');
+
+        // Track viewed commands and history
+        let viewedCommands = JSON.parse(localStorage.getItem('viewedCommands')) || [];
+        let commandHistoryList = JSON.parse(localStorage.getItem('commandHistory')) || [];
+        let totalCommands = 0;
+        let quizState = {
+            currentQuestion: 0,
+            score: 0,
+            questions: []
+        };
+
+        // Calculate total commands
+        for (const category in commands) {
+            totalCommands += commands[category].length;
+        }
+
+        // Update progress
+        function updateProgress() {
+            const uniqueViewed = [...new Set(viewedCommands)];
+            const progress = Math.round((uniqueViewed.length / totalCommands) * 100);
+            progressPercentage.textContent = `${progress}%`;
+            progressBar.style.width = `${progress}%`;
+
+            if (progress < 30) {
+                progressBar.classList.remove('bg-emerald-500', 'bg-yellow-500', 'bg-red-500');
+                progressBar.classList.add('bg-red-500');
+            } else if (progress < 70) {
+                progressBar.classList.remove('bg-emerald-500', 'bg-yellow-500', 'bg-red-500');
+                progressBar.classList.add('bg-yellow-500');
+            } else {
+                progressBar.classList.remove('bg-emerald-500', 'bg-yellow-500', 'bg-red-500');
+                progressBar.classList.add('bg-emerald-500');
+            }
+        }
+
+        // Update command history
+        function updateCommandHistory(command) {
+            if (!commandHistoryList.includes(command)) {
+                commandHistoryList.unshift(command);
+                if (commandHistoryList.length > 10) {
+                    commandHistoryList.pop();
+                }
+                localStorage.setItem('commandHistory', JSON.stringify(commandHistoryList));
+                displayCommandHistory();
+            }
+        }
+
+        // Display command history
+        function displayCommandHistory() {
+            commandHistory.innerHTML = '';
+            commandHistoryList.forEach(cmd => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item px-4 py-2 rounded-lg bg-gray-700 text-sm';
+                historyItem.textContent = cmd;
+                historyItem.addEventListener('click', () => {
+                    searchBar.value = cmd;
+                    searchCommands(cmd);
+                });
+                commandHistory.appendChild(historyItem);
+            });
+        }
+
+        // Display commands for a category
+        function displayCommands(category, searchTerm = '') {
+            commandsContainer.innerHTML = '';
+            categoryTitle.textContent = category === 'basic' ? 'Basic Commands' :
+                                        category === 'file' ? 'File Operations' :
+                                        category === 'system' ? 'System Information' : 'Advanced Commands';
+
+            let filteredCommands = commands[category];
+            if (searchTerm) {
+                filteredCommands = Object.values(commands).flat().filter(cmd =>
+                    cmd.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    cmd.description.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                categoryTitle.textContent = `Search Results for "${searchTerm}"`;
+            }
+
+            filteredCommands.forEach(cmd => {
+                const isViewed = viewedCommands.includes(cmd.name);
+                const card = document.createElement('div');
+                card.className = `command-card bg-gray-800 rounded-xl p-4 ${isViewed ? 'border-l-4 border-emerald-500' : ''}`;
+                card.innerHTML = `
+                    <h3 class="font-bold text-lg text-emerald-400 mb-2">${cmd.name}</h3>
+                    <p class="text-gray-400 mb-3">${cmd.description}</p>
+                    <div class="terminal mb-3">
+                        <div class="mb-1"><span class="prompt">$</span> ${cmd.example}</div>
+                        <div class="text-gray-400">${cmd.output}</div>
+                    </div>
+                    <button class="view-btn mt-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition" data-command="${cmd.name}">
+                        ${isViewed ? '✓ Viewed' : 'Mark as Viewed'}
+                    </button>
+                `;
+                commandsContainer.appendChild(card);
+            });
+
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const command = this.getAttribute('data-command');
+                    if (!viewedCommands.includes(command)) {
+                        viewedCommands.push(command);
+                        localStorage.setItem('viewedCommands', JSON.stringify(viewedCommands));
+                        updateCommandHistory(command);
+                        this.textContent = '✓ Viewed';
+                        this.parentElement.classList.add('border-l-4', 'border-emerald-500');
+                        updateProgress();
+                    }
+                });
+            });
+        }
+
+function searchCommands(term) {
+    commandsContainer.innerHTML = '';
+    categoryTitle.textContent = `Search Results for "${term}"`;
+
+    const filtered = Object.values(commands)
+        .flat()
+        .filter(cmd => cmd.name.toLowerCase().includes(term.toLowerCase()) || cmd.description.toLowerCase().includes(term.toLowerCase()));
+
+    filtered.forEach(cmd => {
+        const isViewed = viewedCommands.includes(cmd.name);
+        const card = document.createElement('div');
+        card.className = `command-card bg-gray-800 rounded-xl p-4 ${isViewed ? 'border-l-4 border-emerald-500' : ''}`;
+        card.innerHTML = `
+            <h3 class="font-bold text-lg text-emerald-400 mb-2">${cmd.name}</h3>
+            <p class="text-gray-400 mb-3">${cmd.description}</p>
+            <div class="terminal mb-3">
+                <div class="mb-1"><span class="prompt">$</span> ${cmd.example}</div>
+                <div class="text-gray-400">${cmd.output}</div>
+            </div>
+            <button class="view-btn mt-2 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm transition" data-command="${cmd.name}">
+                ${isViewed ? '✓ Viewed' : 'Mark as Viewed'}
+            </button>
+        `;
+        commandsContainer.appendChild(card);
+    });
+
+    // Add view button logic again
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const command = this.getAttribute('data-command');
+            if (!viewedCommands.includes(command)) {
+                viewedCommands.push(command);
+                localStorage.setItem('viewedCommands', JSON.stringify(viewedCommands));
+                updateCommandHistory(command);
+                this.textContent = '✓ Viewed';
+                this.parentElement.classList.add('border-l-4', 'border-emerald-500');
+                updateProgress();
+            }
+        });
+    });
+}
+
+
+        // Generate quiz questions
+        function generateQuizQuestions() {
+            const allCommands = Object.values(commands).flat();
+            quizState.questions = [];
+            for (let i = 0; i < 5; i++) {
+                const randomCmd = allCommands[Math.floor(Math.random() * allCommands.length)];
+                const question = {
+                    text: `What does the command "${randomCmd.name}" do?`,
+                    correctAnswer: randomCmd.description,
+                    options: [
+                        randomCmd.description,
+                        ...Object.values(commands).flat()
+                            .filter(cmd => cmd.description !== randomCmd.description)
+                            .sort(() => Math.random() - 0.5)
+                            .slice(0, 3)
+                            .map(cmd => cmd.description)
+                    ].sort(() => Math.random() - 0.5)
+                };
+                quizState.questions.push(question);
+            }
+        }
+
+        // Display quiz question
+        function displayQuizQuestion() {
+            const question = quizState.questions[quizState.currentQuestion];
+            quizQuestion.textContent = question.text;
+            quizOptions.innerHTML = '';
+            question.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-left transition';
+                btn.textContent = option;
+                btn.addEventListener('click', () => checkQuizAnswer(option, question.correctAnswer));
+                quizOptions.appendChild(btn);
+            });
+            quizFeedback.textContent = '';
+        }
+
+        // Check quiz answer
+        function checkQuizAnswer(selected, correct) {
+            if (selected === correct) {
+                quizFeedback.textContent = 'Correct!';
+                quizFeedback.classList.remove('text-red-400');
+                quizFeedback.classList.add('text-green-400');
+                quizState.score++;
+                quizScore.textContent = quizState.score;
+            } else {
+                quizFeedback.textContent = `Incorrect. The correct answer is: ${correct}`;
+                quizFeedback.classList.remove('text-green-400');
+                quizFeedback.classList.add('text-red-400');
+            }
+            nextQuestionBtn.disabled = false;
+        }
+
+        // Initial load
+        displayCommands('basic');
+        updateProgress();
+        displayCommandHistory();
+
+        // Category button clicks
+        categoryButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                displayCommands(category);
+                categoryButtons.forEach(b => b.classList.remove('bg-emerald-800', 'text-white'));
+                this.classList.add('bg-emerald-800', 'text-white');
+                searchBar.value = '';
+            });
+        });
+
+        // Project button clicks
+        projectButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const project = this.getAttribute('data-project');
+                commandsView.classList.add('hidden');
+                projectViews.classList.remove('hidden');
+                quizView.classList.add('hidden');
+            if (project === 'file-manager') {
+                fileManagerProject.classList.remove('hidden');
+                projectTitle.textContent = 'File Manager Demo';
+            } else if (project === 'system-monitor') {
+                systemMonitorProject.classList.remove('hidden');
+                projectTitle.textContent = 'System Monitor Demo';
+            } else if (project === 'sed-processing-project') {
+                    sedProcessingProject.classList.remove('hidden');
+                    projectTitle.textContent = 'Text Processing with sed';
+                } else if (project === 'awk-processing-project') {
+                    awkProcessingProject.classList.remove('hidden');
+                    projectTitle.textContent = 'Data Processing with awk';
+                }
+           });
+        });
+
+        // Back to commands button
+        backToCommands.addEventListener('click', function() {
+            commandsView.classList.remove('hidden');
+            projectViews.classList.add('hidden');
+            fileManagerProject.classList.add('hidden');
+            systemMonitorProject.classList.add('hidden');
+            quizView.classList.add('hidden');
+            displayCommands('basic');
+        });
+
+        // Search bar input
+        searchBar.addEventListener('input', function() {
+            searchCommands(this.value);
+        });
+
+        // Start quiz
+        startQuizBtn.addEventListener('click', function() {
+            commandsView.classList.add('hidden');
+            projectViews.classList.remove('hidden');
+            fileManagerProject.classList.add('hidden');
+            systemMonitorProject.classList.add('hidden');
+            quizView.classList.remove('hidden');
+            projectTitle.textContent = 'Command Quiz';
+            quizState.currentQuestion = 0;
+            quizState.score = 0;
+            quizScore.textContent = '0';
+            generateQuizQuestions();
+            displayQuizQuestion();
+            nextQuestionBtn.disabled = true;
+        });
+        document.getElementById('reset-progress').addEventListener('click', () => {
+    if (confirm('Are you sure you want to reset your learning progress and history?')) {
+        localStorage.removeItem('viewedCommands');
+        localStorage.removeItem('commandHistory');
+        viewedCommands = [];
+        commandHistoryList = [];
+        updateProgress();
+        displayCommandHistory();
+        displayCommands('basic'); // or current category
+    }
+});
+
+        // Next question
+        nextQuestionBtn.addEventListener('click', function() {
+            quizState.currentQuestion++;
+            if (quizState.currentQuestion < quizState.questions.length) {
+                displayQuizQuestion();
+                nextQuestionBtn.disabled = true;
+            } else {
+                quizFeedback.textContent = `Quiz completed! Final score: ${quizState.score}/5`;
+                nextQuestionBtn.disabled = true;
+            }
+        });
+        function resetProgress() {
+    if (confirm("Are you sure you want to reset your learning progress?")) {
+        localStorage.removeItem('viewedCommands');
+        viewedCommands = [];
+        updateProgress();
+        displayCommands('basic');
+        alert("Progress has been reset.");
+    }
+}
+
+        // End quiz
+        endQuizBtn.addEventListener('click', function() {
+            commandsView.classList.remove('hidden');
+            projectViews.classList.add('hidden');
+            quizView.classList.add('hidden');
+            displayCommands('basic');
+        });
+
+        // Mark all commands in current category as viewed
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'm') {
+                const currentCategory = categoryTitle.textContent.toLowerCase().includes('basic') ? 'basic' :
+                                      categoryTitle.textContent.toLowerCase().includes('file') ? 'file' :
+                                      categoryTitle.textContent.toLowerCase().includes('system') ? 'system' : 'advanced';
+
+                commands[currentCategory].forEach(cmd => {
+                    if (!viewedCommands.includes(cmd.name)) {
+                        viewedCommands.push(cmd.name);
+                        updateCommandHistory(cmd.name);
+                    }
+                });
+
+                localStorage.setItem('viewedCommands', JSON.stringify(viewedCommands));
+                displayCommands(currentCategory);
+                updateProgress();
+
+                const notification = document.createElement('div');
+                notification.className = 'fixed bottom-4 right-4 bg-emerald-800 text-white px-4 py-2 rounded-lg shadow-lg';
+                notification.textContent = 'All commands in this category marked as viewed!';
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.classList.add('opacity-0', 'transition', 'duration-500');
+                    setTimeout(() => notification.remove(), 500);
+                }, 2000);
+            }
+        });
+    </script>
+<!-- Video Tutorials Section -->
+
+<!-- Terminal Simulator Section -->
+<div class="container mx-auto my-10 bg-gray-800 p-6 rounded-lg">
+    <h2 class="text-2xl font-bold text-emerald-400 mb-4">Interactive Terminal Simulator</h2>
+    <div id="terminal-container" class="bg-black rounded p-4 h-80 overflow-y-auto"></div>
+</div>
+<!-- Load Xterm.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+<script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
+
+<script>
+    const term = new Terminal({
+        theme: { background: '#1a1a1a' },
+        cursorBlink: true,
+    });
+    term.open(document.getElementById('terminal-container'));
+    term.writeln('Welcome to the Linux Terminal Simulator!');
+    term.prompt = () => term.write('\r\n$ ');
+
+    let virtualFS = { '/': {} };
+    let currentDir = '/';
+
+const runCommand = (cmd) => {
+    const [base, ...args] = cmd.trim().split(' ');
+
+    switch (base) {
+        case 'clear':
+            term.clear();
+            break;
+
+        case 'pwd':
+            term.writeln(currentDir);
+            term.writeln('');
+            break;
+
+        case 'mkdir':
+            args.forEach(dir => {
+                if (!virtualFS[currentDir][dir]) {
+                    virtualFS[currentDir][dir] = {};
+                    term.writeln(`Created directory: ${dir}`);
+                } else {
+                    term.writeln(`mkdir: cannot create directory ‘${dir}’: File exists`);
+                }
+            });
+            term.writeln('');
+            break;
+
+        case 'touch':
+            args.forEach(file => {
+                if (!virtualFS[currentDir][file]) {
+                    virtualFS[currentDir][file] = null;
+                    term.writeln(`Created file: ${file}`);
+                } else {
+                    term.writeln(`touch: cannot create file ‘${file}’: File exists`);
+                }
+            });
+            term.writeln('');
+            break;
+
+        case 'ls':
+            const entries = Object.keys(virtualFS[currentDir]);
+            term.writeln(entries.length ? entries.join('  ') : '(empty)');
+            term.writeln('');
+            break;
+
+        case 'cd':
+            if (args.length === 0 || args[0] === '~') {
+                currentDir = '/';
+            } else if (args[0] === '..') {
+                const path = currentDir.split('/').filter(Boolean);
+                path.pop();
+                currentDir = '/' + path.join('/');
+                if (currentDir === '') currentDir = '/';
+            } else if (virtualFS[currentDir][args[0]] && typeof virtualFS[currentDir][args[0]] === 'object') {
+                currentDir += (currentDir.endsWith('/') ? '' : '/') + args[0];
+            } else {
+                term.writeln(`cd: no such directory: ${args[0]}`);
+            }
+            term.writeln('');
+            break;
+
+        case 'echo':
+            term.writeln(args.join(' '));
+            term.writeln('');
+            break;
+
+        case 'date':
+            term.writeln(new Date().toString());
+            term.writeln('');
+            break;
+
+        case 'whoami':
+            term.writeln('guest');
+            term.writeln('');
+            break;
+
+        case 'cat':
+            args.forEach(file => {
+                if (file in virtualFS[currentDir] && virtualFS[currentDir][file] === null) {
+                    term.writeln(`(empty file: ${file})`);
+                } else {
+                    term.writeln(`cat: ${file}: No such file`);
+                }
+            });
+            term.writeln('');
+            break;
+
+        case 'help':
+                term.writeln('');
+            const helpCommands = [
+                ['clear', 'Clear the terminal'],
+                ['pwd', 'Print working directory'],
+                ['mkdir DIR', 'Make directory'],
+                ['touch FILE', 'Create file'],
+                ['ls', 'List directory contents'],
+                ['cd DIR', 'Change directory'],
+                ['echo TEXT', 'Print TEXT to terminal'],
+                ['date', 'Show current date and time'],
+                ['whoami', 'Display current user'],
+                ['cat FILE', 'Display file content (simulated)'],
+                ['help', 'Show this help']
+            ];
+            helpCommands.forEach(([cmd, desc]) => {
+                term.writeln(`${cmd.padEnd(12)} - ${desc}`);
+            });
+            term.writeln('');
+            break;
+
+        default:
+            term.writeln(`Command not supported: ${base}`);
+            term.writeln('');
+    }
+};
+
+
+    term.prompt();
+    term.onKey(e => {
+        const char = e.key;
+        if (char.charCodeAt(0) === 13) { // Enter
+            runCommand(term.buffer.active.getLine(term.buffer.active.cursorY).translateToString().slice(2));
+            term.prompt();
+        } else {
+            term.write(char);
+        }
+    });
+</script>
+
+</body>
+</html>
