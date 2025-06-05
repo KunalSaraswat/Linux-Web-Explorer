@@ -1386,6 +1386,7 @@
 
         // Display commands for a category
         function displayCommands(category, searchTerm = '') {
+            commandsView.classList.remove('hidden');
             commandsContainer.innerHTML = '';
             categoryTitle.textContent = category === 'basic' ? 'Basic Commands' :
                                         category === 'file' ? 'File Operations' :
@@ -1673,150 +1674,638 @@ function searchCommands(term) {
 <!-- Video Tutorials Section -->
 
 <!-- Terminal Simulator Section -->
-<div class="container mx-auto my-10 bg-gray-800 p-6 rounded-lg">
-    <h2 class="text-2xl font-bold text-emerald-400 mb-4">Interactive Terminal Simulator</h2>
-    <div id="terminal-container" class="bg-black rounded p-4 h-80 overflow-y-auto"></div>
+<div class="container mx-auto my-10 bg-gray-800 p-1 rounded-lg">
+    <h2 class="text-2xl font-bold text-emerald-100 mb-4">Interactive Terminal Simulator</h2>
 </div>
 <!-- Load Xterm.js -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
 <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
 
 <script>
-    const term = new Terminal({
-        theme: { background: '#1a1a1a' },
-        cursorBlink: true,
-    });
-    term.open(document.getElementById('terminal-container'));
-    term.writeln('Welcome to the Linux Terminal Simulator!');
-    term.prompt = () => term.write('\r\n$ ');
-
-    let virtualFS = { '/': {} };
-    let currentDir = '/';
-
-const runCommand = (cmd) => {
-    const [base, ...args] = cmd.trim().split(' ');
-
-    switch (base) {
-        case 'clear':
-            term.clear();
-            break;
-
-        case 'pwd':
-            term.writeln(currentDir);
-            term.writeln('');
-            break;
-
-        case 'mkdir':
-            args.forEach(dir => {
-                if (!virtualFS[currentDir][dir]) {
-                    virtualFS[currentDir][dir] = {};
-                    term.writeln(`Created directory: ${dir}`);
-                } else {
-                    term.writeln(`mkdir: cannot create directory ‘${dir}’: File exists`);
-                }
-            });
-            term.writeln('');
-            break;
-
-        case 'touch':
-            args.forEach(file => {
-                if (!virtualFS[currentDir][file]) {
-                    virtualFS[currentDir][file] = null;
-                    term.writeln(`Created file: ${file}`);
-                } else {
-                    term.writeln(`touch: cannot create file ‘${file}’: File exists`);
-                }
-            });
-            term.writeln('');
-            break;
-
-        case 'ls':
-            const entries = Object.keys(virtualFS[currentDir]);
-            term.writeln(entries.length ? entries.join('  ') : '(empty)');
-            term.writeln('');
-            break;
-
-        case 'cd':
-            if (args.length === 0 || args[0] === '~') {
-                currentDir = '/';
-            } else if (args[0] === '..') {
-                const path = currentDir.split('/').filter(Boolean);
-                path.pop();
-                currentDir = '/' + path.join('/');
-                if (currentDir === '') currentDir = '/';
-            } else if (virtualFS[currentDir][args[0]] && typeof virtualFS[currentDir][args[0]] === 'object') {
-                currentDir += (currentDir.endsWith('/') ? '' : '/') + args[0];
-            } else {
-                term.writeln(`cd: no such directory: ${args[0]}`);
-            }
-            term.writeln('');
-            break;
-
-        case 'echo':
-            term.writeln(args.join(' '));
-            term.writeln('');
-            break;
-
-        case 'date':
-            term.writeln(new Date().toString());
-            term.writeln('');
-            break;
-
-        case 'whoami':
-            term.writeln('guest');
-            term.writeln('');
-            break;
-
-        case 'cat':
-            args.forEach(file => {
-                if (file in virtualFS[currentDir] && virtualFS[currentDir][file] === null) {
-                    term.writeln(`(empty file: ${file})`);
-                } else {
-                    term.writeln(`cat: ${file}: No such file`);
-                }
-            });
-            term.writeln('');
-            break;
-
-        case 'help':
-                term.writeln('');
-            const helpCommands = [
-                ['clear', 'Clear the terminal'],
-                ['pwd', 'Print working directory'],
-                ['mkdir DIR', 'Make directory'],
-                ['touch FILE', 'Create file'],
-                ['ls', 'List directory contents'],
-                ['cd DIR', 'Change directory'],
-                ['echo TEXT', 'Print TEXT to terminal'],
-                ['date', 'Show current date and time'],
-                ['whoami', 'Display current user'],
-                ['cat FILE', 'Display file content (simulated)'],
-                ['help', 'Show this help']
-            ];
-            helpCommands.forEach(([cmd, desc]) => {
-                term.writeln(`${cmd.padEnd(12)} - ${desc}`);
-            });
-            term.writeln('');
-            break;
-
-        default:
-            term.writeln(`Command not supported: ${base}`);
-            term.writeln('');
+// Virtual file system to simulate Linux environment
+let virtualFileSystem = {
+  '/home/kunal': {
+    'data.txt': {
+      content: 'John,25,Engineer\nSarah,30,Doctor\nMike,22,Student\nLisa,35,Teacher',
+      permissions: 'rw-r--r--',
+      inode: 123456,
+      created: 'Jun 10 14:30'
+    },
+    'employees.csv': {
+      content: 'Name,Department,Salary\nJohn,Engineering,75000\nSarah,Marketing,68000\nMike,Sales,82000\nLisa,Engineering,90000',
+      permissions: 'rw-r--r--',
+      inode: 123457,
+      created: 'Jun 10 14:30'
+    },
+    'projects': {
+      'my_project': {
+        'index.html': { content: '<html><body>Hello World!</body></html>', permissions: 'rw-r--r--', inode: 123458, created: 'Jun 10 14:30' },
+        'style.css': { content: '', permissions: 'rw-r--r--', inode: 123459, created: 'Jun 10 14:30' },
+        'app.js': { content: '', permissions: 'rw-r--r--', inode: 123460, created: 'Jun 10 14:30' }
+      }
     }
+  }
 };
 
+let currentPath = '/home/kunal';
+let executedCommands = new Set();
 
-    term.prompt();
-    term.onKey(e => {
-        const char = e.key;
-        if (char.charCodeAt(0) === 13) { // Enter
-            runCommand(term.buffer.active.getLine(term.buffer.active.cursorY).translateToString().slice(2));
-            term.prompt();
-        } else {
-            term.write(char);
-        }
+// Initialize terminal interface
+function initializeTerminal() {
+  const terminalDiv = document.querySelector('.terminal-simulator') || document.createElement('div');
+  if (!terminalDiv.classList.contains('terminal-simulator')) {
+    terminalDiv.classList.add('terminal-simulator');
+    document.body.appendChild(terminalDiv);
+  }
+  terminalDiv.innerHTML = `
+    <style>
+      .terminal-simulator { background: #000; color: #0f0; font-family: 'Courier New', monospace; padding: 20px; border-radius: 5px; height: 400px; overflow-y: auto; }
+      .terminal-output { margin-bottom: 10px; }
+      .terminal-input { display: flex; align-items: center; }
+      .terminal-input input { background: transparent; border: none; color: #0f0; outline: none; width: 100%; font-family: 'Courier New', monospace; }
+      .error { color: #f00; }
+      .explanation { color: #aaa; font-style: italic; }
+      .loading { color: #ff0; }
+    </style>
+    <div class="terminal-output" id="terminalOutput"></div>
+    <div class="terminal-input">
+      <span>kunal@linux:~$ </span>
+      <input type="text" id="commandInput" autofocus>
+    </div>
+  `;
+  document.getElementById('commandInput').addEventListener('keydown', handleInput);
+}
+
+// Handle user input
+function handleInput(event) {
+  if (event.key !== 'Enter') return;
+  const input = event.target.value.trim();
+  if (!input) return;
+
+  const outputDiv = document.getElementById('terminalOutput');
+  outputDiv.innerHTML += `<div>kunal@linux:~$ ${input}</div>`;
+  outputDiv.innerHTML += `<div class="loading">Processing...</div>`;
+  outputDiv.scrollTop = outputDiv.scrollHeight;
+
+  // Simulate processing delay for engagement
+  setTimeout(() => {
+    const loading = outputDiv.querySelector('.loading');
+    if (loading) loading.remove();
+
+    const { output, explanation, isError } = executeCommand(input);
+    displayOutput(output, explanation, isError);
+    updateCommandHistory(input);
+    updateProgress(input);
+  }, 300);
+
+  event.target.value = '';
+}
+
+// Execute commands
+function executeCommand(input) {
+  const [command, ...args] = input.trim().split(/\s+/);
+  let output = '';
+  let isError = false;
+  const explanation = getCommandExplanation(command);
+
+  switch (command) {
+    case 'cat': output = handleCat(args); break;
+    case 'sed': output = handleSed(args); break;
+    case 'awk': output = handleAwk(args); break;
+    case 'ls': output = handleLs(args); break;
+    case 'cd': output = handleCd(args); break;
+    case 'mkdir': output = handleMkdir(args); break;
+    case 'touch': output = handleTouch(args); break;
+    case 'ln': output = handleLn(args); break;
+    case 'find': output = handleFind(args); break;
+    case 'cp': output = handleCp(args); break;
+    case 'pwd': output = currentPath; break;
+    case 'whoami': output = 'kunal'; break;
+    case 'which': output = handleWhich(args); break;
+    case 'whereis': output = handleWhereis(args); break;
+    case 'type': output = handleType(args); break;
+    case 'printenv': output = handlePrintenv(args); break;
+    case 'df': output = handleDf(args); break;
+    case 'uptime': output = handleUptime(); break;
+    case 'top': output = handleTop(); break;
+    case 'clear': output = handleClear(); break;
+    default:
+      output = `bash: ${command}: command not found\n${suggestCommand(command)}`;
+      isError = true;
+  }
+
+  return { output, explanation, isError };
+}
+
+// Command handlers
+function handleCat(args) {
+  if (args[0] === '>') {
+    const fileName = args[1];
+    setPath(resolvePath(currentPath), fileName, { content: '', permissions: 'rw-r--r--', inode: Date.now(), created: new Date().toLocaleString() });
+    return `(Ctrl+D to save)`;
+  }
+  const file = resolvePath(args[0]);
+  return file && file.content !== undefined ? file.content : `cat: ${args[0]}: No such file or directory`;
+}
+
+function handleSed(args) {
+  const filePath = args.find(arg => !arg.startsWith('-') && !arg.includes('/')) || '';
+  const file = resolvePath(filePath);
+  if (!file || file.content === undefined) return `sed: ${filePath}: No such file or directory`;
+
+  let output = file.content.split('\n');
+  const pattern = args.find(arg => arg.includes('/')) || '';
+  if (pattern.startsWith('s/')) {
+    const [, oldText, newText] = pattern.match(/s\/([^\/]*)\/([^\/]*)\//) || [];
+    output = output.map(line => line.replace(new RegExp(oldText, 'g'), newText));
+  } else if (pattern.includes('/d')) {
+    const regex = new RegExp(pattern.replace('/d', ''));
+    output = output.filter(line => !regex.test(line));
+  } else if (pattern.includes('i\\')) {
+    const [, lineNum, text] = pattern.match(/(\d+)i\\(.*)/) || [];
+    output.splice(parseInt(lineNum) - 1, 0, text);
+  } else if (args.includes('-n') && pattern.includes('p')) {
+    const [, start, end] = pattern.match(/(\d+),(\d+)p/) || [];
+    output = output.slice(parseInt(start) - 1, parseInt(end));
+  } else if (pattern.includes('s/^/')) {
+    const [, prefix] = pattern.match(/s\/\^\/([^\/]*)\//) || [];
+    output = output.map(line => `${prefix}${line}`);
+  } else if (args.includes('-i.bak')) {
+    const backupPath = filePath + '.bak';
+    setPath(resolvePath(currentPath), backupPath.split('/').pop(), { ...file });
+    const [, oldText, newText] = pattern.match(/s\/([^\/]*)\/([^\/]*)\//) || [];
+    output = output.map(line => line.replace(new RegExp(oldText, 'g'), newText));
+    setPath(resolvePath(currentPath), filePath.split('/').pop(), { ...file, content: output.join('\n') });
+    return `Modified ${filePath} and created backup ${backupPath}`;
+  }
+  return output.join('\n');
+}
+
+function handleAwk(args) {
+  const fieldSeparator = args[0] === '-F' ? args[1].replace(/['"]/g, '') : ',';
+  const scriptIndex = args[0] === '-F' ? 2 : 0;
+  const filePath = args[args[0] === '-F' ? 3 : 1] || '';
+  const file = resolvePath(filePath);
+  if (!file || file.content === undefined) return `awk: ${filePath}: No such file or directory`;
+
+  let output = [];
+  const lines = file.content.split('\n');
+  const script = args[scriptIndex] || '';
+  if (script.includes('print $')) {
+    const fieldMatch = script.match(/print \$(\d+)/);
+    if (fieldMatch) {
+      const fieldIndex = parseInt(fieldMatch[1]) - 1;
+      lines.forEach(line => {
+        const fields = line.split(fieldSeparator);
+        output.push(fields[fieldIndex] || '');
+      });
+    }
+  } else if (script.includes('$') && script.includes('>')) {
+    const [, field, value] = script.match(/\$(\d+)\s*>\s*(\d+)/) || [];
+    lines.forEach(line => {
+      const fields = line.split(fieldSeparator);
+      if (parseInt(fields[parseInt(field) - 1]) > parseInt(value)) {
+        output.push(`${fields[0]} ${fields[parseInt(field) - 1]}`);
+      }
     });
+  } else if (script.includes('BEGIN')) {
+    const beginMatch = script.match(/BEGIN {print "([^"]+)"}/);
+    if (beginMatch) output.push(beginMatch[1]);
+    const conditionMatch = script.match(/\$(\d+)\s*>\s*(\d+)/);
+    if (conditionMatch) {
+      const [, field, value] = conditionMatch;
+      lines.forEach(line => {
+        const fields = line.split(fieldSeparator);
+        if (parseInt(fields[parseInt(field) - 1]) > parseInt(value)) {
+          output.push(`${fields[0]} ${fields[parseInt(field) - 1]}`);
+        }
+      });
+    }
+  } else if (script.includes('sum')) {
+    let sum = 0, count = 0;
+    lines.forEach(line => {
+      const fields = line.split(fieldSeparator);
+      if (!isNaN(parseInt(fields[2]))) {
+        sum += parseInt(fields[2]);
+        count++;
+      }
+    });
+    output.push(`Avg Salary: ${sum / count}`);
+  } else if (script.includes('NR')) {
+    lines.forEach((line, index) => {
+      const fields = line.split(fieldSeparator);
+      output.push(`${index + 1}. ${fields[0]}`);
+    });
+  } else if (script.includes('~')) {
+    const [, field, pattern] = script.match(/\$(\d+)\s*~\s*\/([^\s\/]+)\//) || [];
+    lines.forEach(line => {
+      const fields = line.split(fieldSeparator);
+      if (fields[parseInt(field) - 1] && fields[parseInt(field) - 1].match(new RegExp(pattern))) {
+        output.push(line);
+      }
+    });
+  }
+  return output.join('\n');
+}
+
+function handleLs(args) {
+  const targetPath = args[0] || currentPath;
+  const dir = resolvePath(targetPath);
+  if (!dir || typeof dir === 'string') return `ls: ${targetPath}: No such file or directory`;
+
+  if (args.includes('-l')) {
+    return Object.entries(dir).map(([name, item]) => {
+      if (item.permissions) {
+        return `${item.permissions} 1 kunal kunal 0 ${item.created} ${name}`;
+      } else {
+        return `drwxr-xr-x 1 kunal kunal 0 ${new Date().toLocaleString()} ${name}`;
+      }
+    }).join('\n');
+  } else if (args.includes('-i')) {
+    return Object.entries(dir).map(([name, item]) => {
+      if (item.inode) {
+        return `${item.inode} ${item.permissions} 1 kunal kunal 0 ${item.created} ${name}`;
+      } else {
+        return `${Date.now()} drwxr-xr-x 1 kunal kunal 0 ${new Date().toLocaleString()} ${name}`;
+      }
+    }).join('\n');
+  }
+  return Object.keys(dir).join('  ');
+}
+
+function handleCd(args) {
+  if (!args[0] || args[0] === '~') {
+    currentPath = '/home/kunal';
+    return '';
+  }
+
+  const targetPath = args[0].startsWith('/') ? args[0] : `${currentPath}/${args[0]}`.replace('//', '/');
+  const dir = resolvePath(targetPath);
+
+  if (dir && typeof dir !== 'string' && !dir.content) {
+    currentPath = targetPath;
+    return '';
+  }
+  return `cd: ${args[0]}: No such file or directory`;
+}
+
+function handleMkdir(args) {
+  const dirName = args[0];
+  if (!dirName) return 'mkdir: missing operand';
+
+  const currentDir = resolvePath(currentPath);
+  if (currentDir && !currentDir[dirName]) {
+    currentDir[dirName] = {};
+    return `Directory '${dirName}' created successfully`;
+  }
+  return `mkdir: cannot create directory '${dirName}': File exists`;
+}
+
+function handleTouch(args) {
+  if (args.length === 0) return 'touch: missing file operand';
+
+  const currentDir = resolvePath(currentPath);
+  if (!currentDir) return 'touch: invalid directory';
+
+  const results = [];
+  args.forEach(fileName => {
+    if (!currentDir[fileName]) {
+      currentDir[fileName] = { content: '', permissions: 'rw-r--r--', inode: Date.now(), created: new Date().toLocaleString() };
+      results.push(`Created file: ${fileName}`);
+    } else {
+      results.push(`File ${fileName} already exists`);
+    }
+  });
+  return results.join('\n');
+}
+
+function handleLn(args) {
+  if (args[0] === '-s') {
+    const [_, source, link] = args;
+    if (!source || !link) return 'ln: missing operand';
+
+    const sourceFile = resolvePath(source);
+    if (!sourceFile) return `ln: ${source}: No such file or directory`;
+
+    const currentDir = resolvePath(currentPath);
+    if (currentDir) {
+      currentDir[link] = { ...sourceFile, symlink: source };
+      return `Created symbolic link '${link}' -> '${source}'`;
+    }
+  }
+  return 'ln: missing operand';
+}
+
+function handleFind(args) {
+  const nameIndex = args.indexOf('-name');
+  if (nameIndex === -1) return 'find: missing -name argument';
+
+  const pattern = args[nameIndex + 1]?.replace(/['"]/g, '') || '';
+  const searchPath = args[0] && !args[0].startsWith('-') ? args[0] : '.';
+  const dir = resolvePath(searchPath === '.' ? currentPath : searchPath);
+
+  if (!dir) return `find: ${searchPath}: No such file or directory`;
+
+  const results = [];
+  function searchDir(current, path) {
+    Object.keys(current).forEach(name => {
+      const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+      if (regex.test(name)) {
+        results.push(`${path}/${name}`);
+      }
+      if (typeof current[name] === 'object' && !current[name].content) {
+        searchDir(current[name], `${path}/${name}`);
+      }
+    });
+  }
+
+  searchDir(dir, searchPath === '.' ? '.' : searchPath);
+  return results.join('\n') || '';
+}
+
+function handleCp(args) {
+  const [source, dest] = args;
+  if (!source || !dest) return 'cp: missing operand';
+
+  const sourceFile = resolvePath(source);
+  if (!sourceFile || !sourceFile.content) return `cp: ${source}: No such file or directory`;
+
+  const currentDir = resolvePath(currentPath);
+  if (currentDir) {
+    currentDir[dest] = { ...sourceFile, inode: Date.now() };
+    return `Copied '${source}' to '${dest}'`;
+  }
+  return 'cp: failed to copy';
+}
+
+function handleWhich(args) {
+  if (!args[0]) return 'which: missing operand';
+  const paths = {
+    bash: '/bin/bash',
+    python: '/usr/bin/python',
+    cat: '/bin/cat',
+    sed: '/bin/sed',
+    awk: '/usr/bin/awk'
+  };
+  return paths[args[0]] || `${args[0]}: not found`;
+}
+
+function handleWhereis(args) {
+  if (!args[0]) return 'whereis: missing operand';
+  const paths = {
+    python: 'python: /usr/bin/python3 /usr/bin/python /usr/lib/python3.8 /etc/python3.8 /usr/share/python',
+    bash: 'bash: /bin/bash /etc/bash.bashrc /usr/share/man/man1/bash.1.gz'
+  };
+  return paths[args[0]] || `${args[0]}: not found`;
+}
+
+function handleType(args) {
+  if (!args[0]) return 'type: missing operand';
+  const builtins = ['cd', 'pwd', 'echo'];
+  return builtins.includes(args[0]) ? `${args[0]} is a shell builtin` : `${args[0]}: not found`;
+}
+
+function handlePrintenv(args) {
+  const env = {
+    'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin',
+    'HOME': '/home/kunal',
+    'USER': 'kunal',
+    'SHELL': '/bin/bash'
+  };
+  return args[0] ? (env[args[0]] || '') : Object.entries(env).map(([k, v]) => `${k}=${v}`).join('\n');
+}
+
+function handleDf(args) {
+  if (args.includes('-h')) {
+    return `Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       100G   50G   45G  53% /
+tmpfs           3.9G  1.2M  3.9G   1% /dev/shm
+/dev/sda2       500G  200G  275G  42% /home`;
+  }
+  return 'df: use -h for human-readable output';
+}
+
+function handleUptime() {
+  const uptime = new Date();
+  return `${uptime.toTimeString().slice(0,8)} up 2 days, 3:45, 1 user, load average: 0.15, 0.10, 0.05`;
+}
+
+function handleTop() {
+  return `top - ${new Date().toTimeString().slice(0,8)} up 2 days,  3:45,  1 user,  load average: 0.15, 0.10, 0.05
+Tasks: 125 total,   1 running, 124 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  2.3 us,  0.7 sy,  0.0 ni, 96.8 id,  0.1 wa,  0.0 hi,  0.1 si,  0.0 st
+MiB Mem :   7856.4 total,   1024.2 free,   2048.3 used,   4783.9 buff/cache
+MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   5432.1 avail Mem
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 1234 kunal     20   0  123456  12345   6789 S   2.3  0.2   0:45.67 gnome-shell
+ 5678 kunal     20   0  234567  12345   7890 S   1.5  0.2   0:12.34 chrome
+ 9012 kunal     20   0   45678   4567   2345 S   0.5  0.1   0:05.43 terminal`;
+}
+
+function handleClear() {
+  document.getElementById('terminalOutput').innerHTML = '';
+  return '';
+}
+
+// Path resolution
+function resolvePath(path) {
+  if (!path) return null;
+
+  let current = virtualFileSystem;
+  let targetPath = path;
+
+  if (path.startsWith('/')) {
+    // Absolute path
+    const parts = path.split('/').filter(Boolean);
+    for (let part of parts) {
+      if (current[part]) {
+        current = current[part];
+      } else {
+        return null;
+      }
+    }
+  } else {
+    // Relative path
+    const currentParts = currentPath.split('/').filter(Boolean);
+    const pathParts = path.split('/');
+
+    for (let part of pathParts) {
+      if (part === '..') {
+        currentParts.pop();
+      } else if (part !== '.') {
+        currentParts.push(part);
+      }
+    }
+
+    current = virtualFileSystem;
+    for (let part of currentParts) {
+      if (current[part]) {
+        current = current[part];
+      } else {
+        return null;
+      }
+    }
+  }
+
+  return current;
+}
+
+function setPath(parent, name, value) {
+  if (!parent) return;
+  parent[name] = value;
+}
+
+// Command explanations
+function getCommandExplanation(command) {
+  const explanations = {
+    'cat': 'Displays file contents',
+    'sed': 'Stream editor for filtering and transforming text',
+    'awk': 'Pattern scanning and processing language',
+    'ls': 'Lists directory contents',
+    'cd': 'Changes current directory',
+    'mkdir': 'Creates directories',
+    'touch': 'Creates empty files or updates timestamps',
+    'ln': 'Creates links between files',
+    'find': 'Searches for files and directories',
+    'cp': 'Copies files or directories',
+    'pwd': 'Prints current working directory',
+    'whoami': 'Displays current username',
+    'which': 'Shows path of commands',
+    'whereis': 'Locates binary, source, and manual files',
+    'type': 'Displays command type information',
+    'printenv': 'Prints environment variables',
+    'df': 'Shows filesystem disk space usage',
+    'uptime': 'Shows system uptime and load',
+    'top': 'Displays running processes',
+    'clear': 'Clears terminal screen'
+  };
+  return explanations[command] || 'Unknown command';
+}
+
+// Suggest similar commands
+function suggestCommand(command) {
+  const suggestions = {
+    'lst': 'Did you mean: ls',
+    'catt': 'Did you mean: cat',
+    'cdd': 'Did you mean: cd',
+    'mkdirr': 'Did you mean: mkdir',
+    'touchh': 'Did you mean: touch',
+    'findd': 'Did you mean: find',
+    'cpp': 'Did you mean: cp'
+  };
+  return suggestions[command] || 'Type "help" for available commands';
+}
+
+// Display output with typing animation
+function displayOutput(output, explanation, isError) {
+  const outputDiv = document.getElementById('terminalOutput');
+  const outputLine = document.createElement('div');
+  if (isError) outputLine.classList.add('error');
+  outputDiv.appendChild(outputLine);
+
+  if (output) {
+    typeText(outputLine, output, () => {
+      if (explanation) {
+        const explanationLine = document.createElement('div');
+        explanationLine.classList.add('explanation');
+        explanationLine.textContent = `Explanation: ${explanation}`;
+        outputDiv.appendChild(explanationLine);
+      }
+      outputDiv.scrollTop = outputDiv.scrollHeight;
+    });
+  } else {
+    if (explanation) {
+      const explanationLine = document.createElement('div');
+      explanationLine.classList.add('explanation');
+      explanationLine.textContent = `Explanation: ${explanation}`;
+      outputDiv.appendChild(explanationLine);
+    }
+    outputDiv.scrollTop = outputDiv.scrollHeight;
+  }
+}
+
+function typeText(element, text, callback) {
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      element.textContent += text.charAt(i);
+      i++;
+      setTimeout(type, 20); // Typing speed
+    } else {
+      callback();
+    }
+  }
+  type();
+}
+
+// Update command history
+function updateCommandHistory(command) {
+  const historyDiv = document.querySelector('.command-history');
+  if (historyDiv) {
+    const entry = document.createElement('div');
+    entry.textContent = `kunal@linux:~$ ${command}`;
+    historyDiv.appendChild(entry);
+
+    // Keep only last 10 commands
+    const entries = historyDiv.querySelectorAll('div');
+    if (entries.length > 10) {
+      entries[0].remove();
+    }
+  }
+}
+
+// Update learning progress
+function updateProgress(command) {
+  executedCommands.add(command.split(' ')[0]);
+
+  const progressDiv = document.querySelector('.learning-progress');
+  if (progressDiv) {
+    const totalCommands = 20; // Total commands to learn
+    const learnedCommands = executedCommands.size;
+    const percentage = Math.min((learnedCommands / totalCommands) * 100, 100);
+
+    const progressBar = progressDiv.querySelector('.progress-bar');
+    const progressText = progressDiv.querySelector('.progress-text');
+
+    if (progressBar) {
+      progressBar.style.width = `${percentage}%`;
+    }
+    if (progressText) {
+      progressText.textContent = `${learnedCommands}/${totalCommands} commands mastered (${Math.round(percentage)}%)`;
+    }
+
+    // Show achievement for milestones
+    if (learnedCommands === 5 || learnedCommands === 10 || learnedCommands === 15 || learnedCommands === 20) {
+      showAchievement(`Achievement unlocked: ${learnedCommands} commands mastered!`);
+    }
+  }
+}
+
+// Show achievement notification
+function showAchievement(message) {
+  const achievement = document.createElement('div');
+  achievement.style.cssText = `
+    position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white;
+    padding: 15px; border-radius: 5px; z-index: 1000; animation: slideIn 0.5s ease;
+  `;
+  achievement.textContent = message;
+  document.body.appendChild(achievement);
+
+  setTimeout(() => {
+    achievement.style.animation = 'slideOut 0.5s ease';
+    setTimeout(() => achievement.remove(), 500);
+  }, 3000);
+}
+
+window.addEventListener("load", () => {
+    window.scrollTo(0, 0); // Always scroll to top when page loads
+});
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', initializeTerminal);
 </script>
+
 
 </body>
 </html>
