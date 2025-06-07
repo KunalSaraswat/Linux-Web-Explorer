@@ -477,7 +477,13 @@
                             </div>
                             <div class="mb-4">
                                 <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">printenv PATH</span>
-                                <div class="output mt-1">/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin</div>
+<div class="output mt-1 whitespace-pre-wrap break-words">
+  /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+</div>
+
+
+
+
                             </div>
                             <div class="mb-4">
                                 <span class="prompt">kunal@linux:</span><span class="text-white">~$</span> <span class="command">df -h</span>
@@ -882,12 +888,12 @@
         "example": "type cd",
         "output": "cd is a shell builtin"
     },
-    {
-        "name": "printenv",
-        "description": "Print all or part of environment variables",
-        "example": "printenv PATH",
-        "output": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    },
+{
+    "name": "printenv",
+    "description": "Print all or part of environment variables",
+    "example": "printenv PATH",
+    "output": "/usr/local/sbin:/usr/local/bin:\n/usr/sbin:/usr/bin:/sbin:/bin"
+},
     {
         "name": "df",
         "description": "Report file system disk space usage",
@@ -1600,7 +1606,7 @@ function searchCommands(term) {
             displayQuizQuestion();
             nextQuestionBtn.disabled = true;
         });
-        document.getElementById('reset-progress').addEventListener('click', () => {
+document.getElementById('reset-progress').addEventListener('click', () => {
     if (confirm('Are you sure you want to reset your learning progress and history?')) {
         localStorage.removeItem('viewedCommands');
         localStorage.removeItem('commandHistory');
@@ -1789,12 +1795,100 @@ function executeCommand(input) {
     case 'uptime': output = handleUptime(); break;
     case 'top': output = handleTop(); break;
     case 'clear': output = handleClear(); break;
+
+    // ✅ NEW BASIC COMMANDS
+    case 'echo': output = handleEcho(args); break;
+    case 'date': output = handleDate(); break;
+    case 'cal': output = handleCal(); break;
+    case 'uname': output = handleUname(args); break;
+    case 'id': output = handleId(); break;
+    case 'env': output = handleEnv(); break;
+
+    // ✅ HELP COMMAND
+    case 'help': output = handleHelp(); break;
+
     default:
       output = `bash: ${command}: command not found\n${suggestCommand(command)}`;
       isError = true;
   }
 
   return { output, explanation, isError };
+}
+
+function handleEcho(args) {
+  return args.join(' ');
+}
+
+function handleDate() {
+  return new Date().toString();
+}
+
+function handleCal() {
+  const now = new Date();
+  const month = now.toLocaleString('default', { month: 'long' });
+  const year = now.getFullYear();
+  return `      ${month} ${year}\nSu Mo Tu We Th Fr Sa\n01 02 03 04 05 06 07\n08 09 10 11 12 13 14\n15 16 17 18 19 20 21\n22 23 24 25 26 27 28\n29 30`;
+}
+
+function handleUname(args) {
+  if (args.includes('-a')) {
+    return 'Linux kunal-machine 5.15.0-73-generic #80-Ubuntu SMP x86_64 GNU/Linux';
+  }
+  return 'Linux';
+}
+
+function handleId() {
+  return 'uid=1000(kunal) gid=1000(kunal) groups=1000(kunal),27(sudo)';
+}
+
+function handleEnv() {
+  return 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\nHOME=/home/kunal\nSHELL=/bin/bash';
+}
+
+function handleHelp() {
+  return `Available Commands:
+
+🔹 File & Directory Commands
+  ls [dir]            → List directory contents
+  cd [dir]            → Change the current directory
+  mkdir [name]        → Create a new directory
+  touch [file]        → Create a new empty file
+  cp [src] [dest]     → Copy files or directories
+  ln [src] [dest]     → Create symbolic or hard links
+  find [dir] [...]    → Search for files and directories
+  cat [file]          → Display contents of a file
+
+🔹 System Information
+  pwd                 → Show current working directory
+  whoami              → Display the current logged-in user
+  id                  → Show user and group ID info
+  uname [-a]          → Print system information
+  uptime              → Show system uptime and load
+  df [-h]             → Display disk space usage
+  top                 → Display real-time system processes
+
+🔹 Shell & Environment
+  echo [text]         → Display a line of text or variable
+  date                → Show current date and time
+  cal                 → Show calendar
+  env                 → Show all environment variables
+  printenv [VAR]      → Show value of an environment variable
+  export VAR=value    → Set an environment variable (simulated)
+  clear               → Clear the terminal screen
+
+🔹 Command Utilities
+  which [cmd]         → Show the path of a command
+  whereis [cmd]       → Show locations of a command's files
+  type [cmd]          → Show how the shell interprets a command
+
+🔹 Text Processing
+  sed [opts]          → Stream editor for text (limited)
+  awk [opts]          → Pattern scanning/processing (limited)
+
+🔹 Help
+  help                → Show this help message
+
+Note: Some commands are simulated. Use this terminal to explore Linux basics interactively.`;
 }
 
 // Command handlers
@@ -2045,7 +2139,8 @@ function handleWhich(args) {
     python: '/usr/bin/python',
     cat: '/bin/cat',
     sed: '/bin/sed',
-    awk: '/usr/bin/awk'
+    awk: '/usr/bin/awk',
+    ls : '/usr/bin/ls'
   };
   return paths[args[0]] || `${args[0]}: not found`;
 }
@@ -2304,6 +2399,42 @@ window.addEventListener("load", () => {
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', initializeTerminal);
+    updateProgress();
+
+</script>
+<script>
+    // ✅ Reset learning progress
+    function resetProgress() {
+        viewedCommands = [];
+        localStorage.setItem('viewedCommands', JSON.stringify(viewedCommands));
+        updateProgress();
+        displayCommands('basic'); // optional: reload default view
+    }
+
+    // ✅ Update progress bar
+    function updateProgress() {
+        const uniqueViewed = [...new Set(viewedCommands)];
+        const progress = Math.round((uniqueViewed.length / totalCommands) * 100);
+        progressPercentage.textContent = `${progress}%`;
+        progressBar.style.width = `${progress}%`;
+
+        // update color
+        progressBar.classList.remove('bg-red-500', 'bg-yellow-500', 'bg-emerald-500');
+        if (progress < 30) {
+            progressBar.classList.add('bg-red-500');
+        } else if (progress < 70) {
+            progressBar.classList.add('bg-yellow-500');
+        } else {
+            progressBar.classList.add('bg-emerald-500');
+        }
+    }
+
+    // ✅ Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        displayCommands('basic'); // or whichever default category
+        displayCommandHistory();
+        updateProgress();
+    });
 </script>
 
 
