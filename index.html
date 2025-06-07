@@ -2267,27 +2267,47 @@ function setPath(parent, name, value) {
 // Command explanations
 function getCommandExplanation(command) {
   const explanations = {
-    'cat': 'Displays file contents',
-    'sed': 'Stream editor for filtering and transforming text',
-    'awk': 'Pattern scanning and processing language',
+    // File & Directory Commands
     'ls': 'Lists directory contents',
     'cd': 'Changes current directory',
     'mkdir': 'Creates directories',
     'touch': 'Creates empty files or updates timestamps',
-    'ln': 'Creates links between files',
-    'find': 'Searches for files and directories',
     'cp': 'Copies files or directories',
+    'ln': 'Creates symbolic or hard links between files',
+    'find': 'Searches for files and directories',
+    'cat': 'Displays contents of a file',
+
+    // System Information
     'pwd': 'Prints current working directory',
     'whoami': 'Displays current username',
-    'which': 'Shows path of commands',
-    'whereis': 'Locates binary, source, and manual files',
-    'type': 'Displays command type information',
-    'printenv': 'Prints environment variables',
-    'df': 'Shows filesystem disk space usage',
-    'uptime': 'Shows system uptime and load',
-    'top': 'Displays running processes',
-    'clear': 'Clears terminal screen'
+    'id': 'Shows user and group ID information',
+    'uname': 'Prints system information',
+    'uptime': 'Shows system uptime and load averages',
+    'df': 'Displays disk space usage',
+    'top': 'Displays real-time system processes',
+
+    // Shell & Environment
+    'echo': 'print the content writeen with echo cmd',
+    'date': 'Shows current date and time',
+    'cal': 'Shows calendar',
+    'env': 'Shows all environment variables',
+    'printenv': 'Prints environment variable values',
+    'export': 'Sets an environment variable (simulated)',
+    'clear': 'Clears the terminal screen',
+
+    // Command Utilities
+    'which': 'Shows the path of a command',
+    'whereis': "Shows locations of a command's files",
+    'type': 'Shows how the shell interprets a command',
+
+    // Text Processing
+    'sed': 'Stream editor for filtering and transforming text',
+    'awk': 'Pattern scanning and processing language',
+
+    // Help
+    'help': 'Shows this help message'
   };
+
   return explanations[command] || 'Unknown command';
 }
 
