@@ -750,6 +750,140 @@
         "example": "stat file.txt",
         "output": "Size: 1024\tBlocks: 8\tIO Block: 4096\tRegular file\nDevice: 802h/Inode: 123456\tLinks: 1"
     },
+    
+  {
+    "name": "mv",
+    "description": "Move or rename files or directories",
+    "example": "mv file1.txt new_file.txt && echo 'File renamed'",
+    "output": "File renamed"
+  },
+  {
+    "name": "rm",
+    "description": "Remove files or directories",
+    "example": "rm -v file1.txt",
+    "output": "removed 'file1.txt'"
+  },
+  {
+    "name": "chgrp",
+    "description": "Change group ownership of files or directories",
+    "example": "chgrp users file.txt && echo 'Group changed to users'",
+    "output": "Group changed to users"
+  },
+  {
+    "name": "install",
+    "description": "Copy files and set attributes",
+    "example": "install -v file.txt /usr/local/bin/",
+    "output": "'file.txt' -> '/usr/local/bin/file.txt'"
+  },
+  {
+    "name": "mktemp",
+    "description": "Create a temporary file or directory",
+    "example": "mktemp",
+    "output": "/tmp/tmp.XYz123456"
+  },
+  {
+    "name": "rename",
+    "description": "Rename multiple files",
+    "example": "rename 's/.txt/.bak/' file.txt && echo 'File renamed to file.bak'",
+    "output": "File renamed to file.bak"
+  },
+  {
+    "name": "rsync",
+    "description": "Synchronize files and directories locally or remotely",
+    "example": "rsync -av file.txt /backup/ && echo 'Sync complete'",
+    "output": "sending incremental file list\nfile.txt\nSync complete"
+  },
+  {
+    "name": "scp",
+    "description": "Securely copy files between hosts over SSH",
+    "example": "scp file.txt user@remote:/home/user/ && echo 'File transferred'",
+    "output": "File transferred"
+  },
+  {
+    "name": "sftp",
+    "description": "Secure file transfer protocol client",
+    "example": "echo 'put file.txt' | sftp user@remote && echo 'File uploaded'",
+    "output": "File uploaded"
+  },
+  {
+    "name": "tar",
+    "description": "Create or extract tar archives",
+    "example": "tar -cvf archive.tar file.txt && echo 'Archive created'",
+    "output": "file.txt\nArchive created"
+  },
+  {
+    "name": "gzip",
+    "description": "Compress files using gzip",
+    "example": "gzip -v file.txt",
+    "output": "file.txt:  50.0% -- replaced with file.txt.gz"
+  },
+  {
+    "name": "gunzip",
+    "description": "Decompress files compressed with gzip",
+    "example": "gunzip -v file.txt.gz",
+    "output": "file.txt.gz:  50.0% -- replaced with file.txt"
+  },
+  {
+    "name": "bzip2",
+    "description": "Compress files using bzip2",
+    "example": "bzip2 -v file.txt",
+    "output": "file.txt:  2.0:1, 4.0 bits/byte, 50.0% saved, 100 in, 50 out"
+  },
+  {
+    "name": "xz",
+    "description": "Compress files using xz",
+    "example": "xz -v file.txt",
+    "output": "file.txt (1/1)\n  50.0%    100 B -> 50 B"
+  },
+  {
+    "name": "zip",
+    "description": "Create or add to zip archives",
+    "example": "zip -v archive.zip file.txt",
+    "output": "adding: file.txt (stored 0%)"
+  },
+  {
+    "name": "unzip",
+    "description": "Extract files from zip archives",
+    "example": "unzip -v archive.zip",
+    "output": "Archive:  archive.zip\n Length   Date    Time    Name\n--------  ----    ----    ----\n     100  06-08-25 00:33   file.txt"
+  },
+  {
+    "name": "dd",
+    "description": "Copy and convert files at a low level",
+    "example": "dd if=/dev/zero of=testfile bs=1M count=1 && echo 'File created'",
+    "output": "1+0 records in\n1+0 records out\n1048576 bytes (1.0 MB) copied\nFile created"
+  },
+  {
+    "name": "mount",
+    "description": "Mount a filesystem",
+    "example": "mount /dev/sdb1 /mnt && echo 'Filesystem mounted'",
+    "output": "Filesystem mounted"
+  },
+  {
+    "name": "umount",
+    "description": "Unmount a filesystem",
+    "example": "umount /mnt && echo 'Filesystem unmounted'",
+    "output": "Filesystem unmounted"
+  },
+  {
+    "name": "sync",
+    "description": "Flush filesystem buffers to disk",
+    "example": "sync && echo 'Buffers flushed'",
+    "output": "Buffers flushed"
+  },
+  {
+    "name": "fallocate",
+    "description": "Preallocate space for a file",
+    "example": "fallocate -l 1M file.txt && echo 'Space allocated'",
+    "output": "Space allocated"
+  },
+  {
+    "name": "truncate",
+    "description": "Shrink or extend the size of a file",
+    "example": "truncate -s 1M file.txt && echo 'File resized'",
+    "output": "File resized"
+  },
+
     {
         "name": "head",
         "description": "View the first few lines of a file",
