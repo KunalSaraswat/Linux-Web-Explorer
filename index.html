@@ -589,6 +589,7 @@
     "example": "clear",
     "output": "(Terminal screen is cleared)"
   },
+
   {
     "name": "man",
     "description": "Display the manual page for a command",
@@ -601,6 +602,38 @@
     "example": "grep 'main' file.txt",
     "output": "int main()"
   },
+
+  {
+    "name": "unalias",
+    "description": "Remove command aliases",
+    "example": "unalias -a && echo 'All aliases removed'",
+    "output": "All aliases removed"
+  },
+  {
+    "name": "exit",
+    "description": "Exit the current shell session",
+    "example": "echo 'Goodbye!' && exit",
+    "output": "Goodbye!"
+  },
+  {
+    "name": "logout",
+    "description": "Exit a login shell",
+    "example": "logout && echo 'Logged out'",
+    "output": "Logged out"
+  },
+  {
+    "name": "source",
+    "description": "Execute commands from a file in the current shell",
+    "example": "source ~/.bashrc && echo 'Configuration reloaded'",
+    "output": "Configuration reloaded"
+  },
+  {
+    "name": "mkdir",
+    "description": "Create new directories",
+    "example": "mkdir new_folder && echo 'Directory created'",
+    "output": "Directory created"
+  },
+
   {
     "name": "history",
     "description": "Show the command history",
@@ -2287,7 +2320,7 @@ function getCommandExplanation(command) {
     'top': 'Displays real-time system processes',
 
     // Shell & Environment
-    'echo': 'print the content writeen with echo cmd',
+    'echo': 'print the content written with echo cmd',
     'date': 'Shows current date and time',
     'cal': 'Shows calendar',
     'env': 'Shows all environment variables',
