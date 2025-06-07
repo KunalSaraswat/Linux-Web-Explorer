@@ -1816,7 +1816,20 @@ function executeCommand(input) {
 }
 
 function handleEcho(args) {
-  return args.join(' ');
+  if (!args || args.length === 0) return '';
+
+  if (args[0]?.toLowerCase() === 'quote' && args[1]?.toLowerCase() === 'week') {
+    const weekNumber = args[2] ? parseInt(args[2], 10) : Math.ceil((Date.now() - new Date(new Date().getFullYear(), 0, 1)) / (24 * 60 * 60 * 1000 * 7));
+    if (isNaN(weekNumber) || weekNumber < 1 || weekNumber > 52) {
+      return 'Error: Invalid week number (1-52).';
+    }
+    const quotes = ['Week 1: Start strong!', 'Week 2: Keep pushing!'];
+    return quotes[weekNumber - 1] || `No quote for week ${weekNumber}.`;
+  }
+
+  // Strip single or double quotes from each argument
+  const cleanedArgs = args.map(arg => arg.replace(/^(['"])(.*)\1$/, '$2'));
+  return cleanedArgs.join(' ').trim();
 }
 
 function handleDate() {
